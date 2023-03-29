@@ -12,10 +12,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 RUN pip install "poetry==$POETRY_VERSION"
 
-RUN poetry config virtualenvs.create false
+WORKDIR /wetter
+COPY ./wetter/pyproject.toml ./wetter/poetry.lock /wetter/
 
-COPY . /wetter
-
-WORKDIR /wetter/wetter
-
-RUN poetry install --no-interaction --no-ansi
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-ansi
