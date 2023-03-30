@@ -1,4 +1,5 @@
 import argparse
+from wetter.core import latest_datapoint
 from . import __version__
 
 
@@ -34,8 +35,8 @@ def parse_arguments():
 
 
 def cmd_latest():
-    print("Print latest measurement")
-
+    result = latest_datapoint()
+    print(result)
 
 def cmd_update():
     print("Update DB")
