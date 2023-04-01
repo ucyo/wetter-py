@@ -16,7 +16,19 @@ requests = "^2.28.2"
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
 flake8 = "^6.0.0"
-pytest = "^7.2.2"
+pytest-cov = "^4.0.0"
+isort = "^5.12.0"
+
+[tool.black]
+line-length = 120
+
+[tool.pytest.ini_options]
+markers = [
+    "web: mark tests as web (deselect with '-m \"not web\"')",
+]
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry-core>=1.2.0"]
