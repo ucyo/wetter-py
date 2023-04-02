@@ -1,3 +1,10 @@
+"""Command line tool for accessing the wetter library.
+
+Setup of the command line tool (CLI) for the library.
+The user should be able to handle all necessary communication with
+the backend using this interface incl. updating of the database.
+"""
+
 import argparse
 from datetime import datetime as dt
 from datetime import timezone as tz
@@ -9,6 +16,7 @@ from . import __version__
 
 
 def main():
+    """Parse user query and return answer from database to user."""
     args = parse_args()
     db = conn.get_db()
     now = dt.utcnow().astimezone(tz.utc)
@@ -25,11 +33,14 @@ def main():
             print(qu.last_year(db.df, now))
     elif args.cmd == "compare-details":
         print(qu.specific_month(db.df, now, args.month))
-    else:
+    elif args.cmd == "latest":
         print(qu.latest_datapoint(db.df, now))
+    else:
+        raise Exception(f"Can not understand the provided subcommand {args.cmd}")
 
 
 def get_parser():
+    """Define argument parser for CLI tool."""
     parser = argparse.ArgumentParser(
         prog="wetter",
         description="Cli tool to check the outside when you're inside",
@@ -48,9 +59,25 @@ def get_parser():
     detailed_cmp_parser.add_argument("month", type=int, choices=range(1, 13), help="Month")
     return parser
 
+
 def parse_args(args):
+    """Parse arguments from the command line.
+
+    This is a wrapper around the `argparse` argument parser.
+    It is necessary since `argparse` does not allow to setup a default subcommand.
+    Should the subcommand be empty, this function will fill in the `latest` subcommand.
+
+    :param args: Arguments to be parsed
+    :type args: list
+    :return: Parsed arguments
+    :rtype: `argparse.Namespace`
+    """
     parser = get_parser()
     args = parser.parse_args(args)
     if args.cmd is None:
         args.cmd = "latest"
     return args
+
+
+if __name__ == "__main__":
+    main()

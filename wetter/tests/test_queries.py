@@ -1,3 +1,10 @@
+"""Test file for the queries on the backend system.
+
+This module will test the queries being executed for the cli tool.
+Additionally it needs to be tested if the arguments and return values
+for the functions are the same. Details about the queries can be found
+in the appropiate documentation of the [wetter library](../wetter/queries.py).
+"""
 from datetime import datetime as dt, timezone as tz
 from datetime import timedelta
 
