@@ -1,3 +1,12 @@
+"""Test file for the command line tool.
+
+Checking the functionality of the application and possible input mistakes.
+It is responsible for the following tasks:
+
+- Catching of unallowed commands
+- Expected default behviour application if variables/commands are forgotten
+"""
+import pytest
 from argparse import ArgumentParser
 
 from wetter import cli
@@ -10,8 +19,9 @@ def test_get_parser():
 
 def test_empty():
     args = cli.parse_args([])
-    assert args.cmd is "latest"
+    assert args.cmd == "latest"
+
 
 def test_compare():
     with pytest.raises(SystemExit):
-        args = cli.parse_args(["compare"])
+        cli.parse_args(["compare"])

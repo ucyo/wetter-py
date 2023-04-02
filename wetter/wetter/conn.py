@@ -1,23 +1,56 @@
+"""Backend of the wetter library.
+
+This module handles the measurement data.
+It is reponsible for defining a unified interface to the local data.
+The includes the json structure of the data to be saved on the local machine.
+as well as the update of the data using open API services.
+The module defines three components:
+
+- `WetterDB`: Read/Write/Update of the database
+- `APIForWeatherData`: Definition of an API for access different WetterAPI services
+- `QueryTicket`: Common data structure to abstract and regulate query parameters
+
+The `WetterDB` reads and write data to the json backend store.
+This can handle all the day to day queries of the cli tool.
+If an update is necessary, then the other two components come in play.
+
+The update process itself is a two step process.
+First, a `QueryTicket` is defined.
+It defines the data to be gathered from outside services e.g. [OpenMeteo](https://open-meteo.com/).
+Afterwards this ticket is given to an API service for weather data.
+Currently there is the OpenMeteo WeatherAPI service implemented.
+Additional service might be added later on.
+All API services need to be subclasses of `APIForWeatherData`.
+This allows for an easy interchange of APIs.
+"""
+
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime as dt
-from datetime import timezone as tz
+from datetime import datetime as dt, timezone as tz
 
 import numpy as np
 import pandas as pd
 import requests as rqs
 from pytz import UTC
 
+# Gather absolute path of json file based on its relative position
 DATA_LOCATION = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
 DB = os.path.join(DATA_LOCATION, "data.json")
 
 
 def get_db():
+    """Return the database with all measurements.
+
+    :return: Database of measurements
+    :rtype: WetterDB
+    """
     return WetterDB(DB)
 
 
 class WetterDB:
+    """Database of weather measurements for a single location."""
+
     def __init__(self, filename):
         with open(filename, "r") as f:
             self._raw_data = json.load(f)
@@ -30,6 +63,10 @@ class WetterDB:
         self.check_df()
 
     def check_df(self):
+        """Check assumptions about the database and its structure/schema.
+
+        :raises: AssertionError
+        """
         assert "temperature" in self.df.columns
         assert "wind" in self.df.columns
         assert self.df.ndim == 2
@@ -38,6 +75,20 @@ class WetterDB:
         assert self.df.index[0].tzinfo == UTC
 
     def __getattr__(self, name):
+        """Get attribute from inner `pd.DataFrame` if not provided by base class.
+
+        The core compoment of the database is the internal `pd.DataFrame`
+        object. This method helps calling the attributes of this core component
+        by using the attributes of the WetterDB. First, the attributes of the
+        WetterDB are returned. Should this result in an error, then the request
+        is delegated to the `pd.DataFrame`. Any error on this level is not catched.
+
+        :param name: Requested attribute name
+        :type name: str
+        :return: Requested Attribute
+        :type: Not clear and based on the request
+        :raises: KeyError
+        """
         try:
             return self.__dict__[name]
         except KeyError:
@@ -45,6 +96,16 @@ class WetterDB:
 
     @staticmethod
     def update(db_location, dry_run=False):
+        """Update of a database at a given location.
+
+        :param db_location: Database location
+        :type db_location: str
+        :param dry_run: Write update on to disk (default) or not
+        :type dry_run: bool
+        :return: Latest and updated weather measurements
+        :rtype: pd.DataFrame
+        """
+        # TODO: This should return a WetterDB
         base = WetterDB(db_location)
         latest = base.df.index.max()
         now = dt.utcnow().astimezone(tz.utc)
@@ -57,9 +118,65 @@ class WetterDB:
         return df
 
 
-class OpenMeteoMeasurements:
+# TODO: Integrate this API for the database
+class APIForWeatherData:
+    """Informal interface to external APIs.
+
+    The informal interface defines a blueprint for the functions to
+    be implemented by future APIs. This helps an easy exchange of the
+    used API service for the update of the database.
+
+    ¡Caution! This is not a strict interface and will be not enforced.
+    But if it looks like a duck, ... :)
+    """
+
     @staticmethod
     def parse(response):
+        """Parse and transform the response in a format accepted by WetterDB.
+
+        :param response: Response of API query
+        :type response: dict
+        :return: Measurements to be added to the WetterDB
+        :rtype: pd.DataFrame
+        """
+        assert type(response) == dict
+        raise NotImplementedError("Parsing is not implemented.")
+
+    @staticmethod
+    def url():
+        """URL of the API to be called by the `request` module.
+
+        The returned string is expected to have placeholders for lat, lon, tz
+        start_date and end_date e.g.
+        `result = f"https://api.example.com/weather?latitude={lat}?longitude={lon}?..."`
+
+        :return: URL of API an http request should be send to
+        :rtype: str
+        """
+        raise NotImplementedError("URL is not setup.")
+
+    @staticmethod
+    def get(qt):
+        """Get the data from REST API and parse the result.
+
+        :param qt: The request parameters for the API call
+        :type qt: QueryTicket
+        :return: Updated database with new measurements
+        :rtype: pd.DataFrame
+        :raises: Exception (if response status code != 200)
+        """
+        assert isinstance(qt, QueryTicket), f"Expected Queryticket, got {type(qt)}"
+        raise NotImplementedError("HTTP Get request to API not implemented.")
+
+
+class OpenMeteoMeasurements(APIForWeatherData):
+    @staticmethod
+    def parse(response):
+        """Parse and tranform the response in a format accepted by WetterDB.
+
+        For details check superclass `APIForWeatherData`.
+        """
+        assert type(response) == dict
         df = pd.DataFrame(
             {
                 "time": [dt.strptime(x, "%Y-%m-%dT%H:%M").astimezone(tz=tz.utc) for x in response["hourly"]["time"]],
@@ -72,6 +189,10 @@ class OpenMeteoMeasurements:
 
     @staticmethod
     def url():
+        """URL of the API to be called by the `request` module.
+
+        For details check superclass `APIForWeatherData`.
+        """
         return (
             "https://api.open-meteo.com/v1/forecast?"
             + "latitude={lat:.2f}&longitude={lon:.2f}&"
@@ -81,6 +202,18 @@ class OpenMeteoMeasurements:
 
     @staticmethod
     def archive():
+        """URL for archive API to be called by the `request` module.
+
+        The OpenMeteo API provides a separate API interface for historical data.
+        This URL support older datasets, but the latest data provided is a week
+        from today i.e. `datetime.utcnow()`.
+        The returned string is expected to have placeholders for lat, lon, tz
+        start_date and end_date e.g.
+        `result = f"https://api.example.com/weather?latitude={lat}?longitude={lon}?..."`
+
+        :return: URL of API an http request should be send to
+        :rtype: str
+        """
         return (
             "https://archive-api.open-meteo.com/v1/archive?"
             + "latitude={lat:.2f}&longitude={lon:.2f}&"
@@ -90,6 +223,10 @@ class OpenMeteoMeasurements:
 
     @staticmethod
     def get(qt):
+        """Get the data from REST API and parse the result.
+
+        For details check superclass `APIForWeatherData`.
+        """
         assert isinstance(qt, QueryTicket)
         url = OpenMeteoMeasurements.url()
         api = url.format(
@@ -111,6 +248,26 @@ class OpenMeteoMeasurements:
 
 @dataclass
 class QueryTicket:
+    """Define, check and possibly restrict request parameters for APIs.
+
+    An instance of `QueryTicket` defines the start and end date, the location
+    using lat and lon coordinate, as well as the timezone of the output.
+    The provided dataclass already supported defaults for the location
+    (i.e. Karlsruhe) and timezone (i.e. UTC).
+    Some consistency checks e.g. start date <= end date are done at creation.
+
+    :param start: Start date of the measurements to be queried
+    :type start: datetime.date
+    :param end: End date of the measurements to be queried
+    :type end: datetime.date
+    :param lat: Latitude position of the measurements to be queried
+    :type lat: float
+    :param lon: Longitude position of the measurements to be queried
+    :type lon: float
+    :param tz: Timezone of the measurements to be queried
+    :type tz: str
+    """
+
     start: dt.date
     end: dt.date
     lat: float = 49

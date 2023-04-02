@@ -1,3 +1,12 @@
+"""Test file for the backend connection.
+
+the functions in this file are being used to test the backend service
+of the application. It is responsible for the following tasks:
+
+- Testing the structure of the data being saved as json
+- Testing the communication to weather APIs
+- Testing the update process
+"""
 import os
 from datetime import datetime as dt
 
