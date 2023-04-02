@@ -1,0 +1,65 @@
+name: Create a new release of the package
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+        - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+        - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+        - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+        - name: Check out repository code
+          uses: actions/checkout@v3
+        - name: Install Poetry
+          run: pipx install poetry
+        - uses: actions/setup-python@v4
+          with:
+            python-version: '3.10'
+            cache: 'poetry'
+        - name: Install package
+          shell: bash
+          working-directory: ./wetter
+          run: poetry install --no-interaction --no-ansi -vv
+        - name: Activate environment
+          working-directory: ./wetter
+          shell: bash
+          run: |
+            if [ "$RUNNER_OS" == "Windows" ]; then
+                source $(poetry env info --path)\\Scripts\\activate;
+            else
+                source $(poetry env info --path)/bin/activate;
+            fi
+            python -c "import wetter"
+        - name: Get current version of library from poetry
+          shell: bash
+          run: echo "##[set-output name=version;]$(poetry version --short)"
+          id: wetter
+        - name: Get current branch
+          shell: bash
+          run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          id: repo
+        - name: Create release
+          uses: ncipollo/release-action@v1
+          with:
+            artifacts: "./imktk/dist/*"
+            token: ${{ secrets.GITHUB_TOKEN }}
+            draft: false
+            prerelease: steps.repo.outputs.branch == 'devel'
+        # - name: Publish to PyPI
+        #   env:
+        #     POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI }}
+        #   run: poetry publish --no-interaction --no-ansi -vv
+        - name: Publish to Dockerhub
+          shell: bash
+          working-directory: ./cicd-workflows
+          env:
+            DOCKER_BRANCH:  ${{ steps.repo.outputs.branch }}
+            DOCKER_TAG: ${{ steps.wetter.outputs.version }}
+            DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+            DOCKER_SECRET: ${{ secrets.DOCKER_SECRET }}
+          run: ./build-and-push-docker-images.sh
