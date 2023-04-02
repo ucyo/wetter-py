@@ -48,17 +48,158 @@ def get_db():
     return WetterDB(DB)
 
 
+class APIForWeatherData:
+    """Informal interface to external APIs.
+
+    The informal interface defines a blueprint for the functions to
+    be implemented by future APIs. This helps an easy exchange of the
+    used API service for the update of the database.
+
+    ¡Caution! This is not a strict interface and will be not enforced.
+    But if it looks like a duck, ... :)
+    """
+
+    @staticmethod
+    def parse(response):
+        """Parse and transform the response in a format accepted by WetterDB.
+
+        :param response: Response of API query
+        :type response: dict
+        :return: Measurements to be added to the WetterDB
+        :rtype: pd.DataFrame
+        """
+        assert type(response) == dict
+        raise NotImplementedError("Parsing is not implemented.")
+
+    @staticmethod
+    def url(qt):
+        """URL of the API to be called.
+
+        The URL will be filled out by the data saved in the QueryTicket.
+
+        :param qt: The request parameters for the API call
+        :type qt: QueryTicket
+        :return: URL of API an http request should be send to
+        :rtype: str
+        """
+        assert isinstance(qt, QueryTicket), f"Expected Queryticket, got {type(qt)}"
+        raise NotImplementedError("URL is not setup.")
+
+    @staticmethod
+    def get(qt):
+        """Get the data from REST API and parse the result.
+
+        :param qt: The request parameters for the API call
+        :type qt: QueryTicket
+        :return: HTTP Response of the external API
+        :rtype: requests.Response
+        """
+        assert isinstance(qt, QueryTicket), f"Expected Queryticket, got {type(qt)}"
+        raise NotImplementedError("HTTP Get request to API not implemented.")
+
+
+class OpenMeteoMeasurements(APIForWeatherData):
+    @staticmethod
+    def parse(response):
+        """Parse and tranform the response in a format accepted by WetterDB.
+
+        For details check superclass `APIForWeatherData`.
+        """
+        assert type(response) == dict
+        df = pd.DataFrame(
+            {
+                "time": [dt.strptime(x, "%Y-%m-%dT%H:%M").astimezone(tz=tz.utc) for x in response["hourly"]["time"]],
+                "temperature": response["hourly"]["temperature_2m"],
+                "wind": response["hourly"]["windspeed_10m"],
+            }
+        )
+        df = df.set_index("time")
+        return df
+
+    @staticmethod
+    def url(qt):
+        """URL of the API to be called.
+
+        For details check superclass `APIForWeatherData`.
+        """
+        assert isinstance(qt, QueryTicket), f"Expected Queryticket, got {type(qt)}"
+        url = (
+            "https://api.open-meteo.com/v1/forecast?"
+            + "latitude={lat:.2f}&longitude={lon:.2f}&"
+            + "timezone={tz}&start_date={start}&end_date={end}&"
+            + "hourly=temperature_2m,windspeed_10m,weathercode&current_weather=true"
+        )
+        return url.format(
+            lat=qt.lat,
+            lon=qt.lon,
+            tz=qt.tz,
+            start=qt.start.strftime("%Y-%m-%d"),
+            end=qt.end.strftime("%Y-%m-%d"),
+        )
+
+    @staticmethod
+    def get(qt):
+        """Get the data from REST API and parse the result.
+
+        For details check superclass `APIForWeatherData`.
+        """
+        assert isinstance(qt, QueryTicket)
+        url = OpenMeteoMeasurements.url(qt)
+        result = rqs.get(url)
+        return result
+
+
+@dataclass
+class QueryTicket:
+    """Define, check and possibly restrict request parameters for APIs.
+
+    An instance of `QueryTicket` defines the start and end date, the location
+    using lat and lon coordinate, as well as the timezone of the output.
+    The provided dataclass already supported defaults for the location
+    (i.e. Karlsruhe) and timezone (i.e. UTC).
+    Some consistency checks e.g. start date <= end date are done at creation.
+
+    :param start: Start date of the measurements to be queried
+    :type start: datetime.date
+    :param end: End date of the measurements to be queried
+    :type end: datetime.date
+    :param lat: Latitude position of the measurements to be queried
+    :type lat: float
+    :param lon: Longitude position of the measurements to be queried
+    :type lon: float
+    :param tz: Timezone of the measurements to be queried
+    :type tz: str
+    """
+
+    start: dt.date
+    end: dt.date
+    lat: float = 49
+    lon: float = 8.41
+    tz: str = "UTC"
+
+    def __post_init__(self):
+        if self.start > self.end:
+            tmp = self.start
+            self.start = self.end
+            self.end = tmp
+
+
 class WetterDB:
     """Database of weather measurements for a single location."""
 
     def __init__(self, filename):
         with open(filename, "r") as f:
             self._raw_data = json.load(f)
+
+        # Setup the measurements (flexibel for future updates)
         number_of_measurements = len(self._raw_data["data"])
         measurements = {self._raw_data["index"][i]: self._raw_data["data"][i] for i in range(0, number_of_measurements)}
+
+        # Setup dataframe
         df = pd.DataFrame({"time": self._raw_data["columns"], **measurements})
         df = df.set_index("time")
         df.index = df.index.astype(np.datetime64).tz_localize("UTC")
+
         self.df = df
         self.check_df()
 
@@ -95,187 +236,42 @@ class WetterDB:
             return getattr(self.df, name)
 
     @staticmethod
-    def update(db_location, dry_run=False):
+    def update(db_location, api=OpenMeteoMeasurements, dry_run=False):
         """Update of a database at a given location.
 
         :param db_location: Database location
         :type db_location: str
+        :param api: API to be used for measurement updates
+        :type api: APIForWeatherData
         :param dry_run: Write update on to disk (default) or not
         :type dry_run: bool
         :return: Latest and updated weather measurements
         :rtype: pd.DataFrame
-        """
-        # TODO: This should return a WetterDB
-        base = WetterDB(db_location)
-        latest = base.df.index.max()
-        now = dt.utcnow().astimezone(tz.utc)
-        qt = QueryTicket(start=latest, end=now)
-        new_measurements = OpenMeteoMeasurements.get(qt)
-        df = pd.concat([base.df, new_measurements])
-        df = df[~df.index.duplicated(keep="last")]
-        if not dry_run:
-            df.T.to_json(db_location, orient="split", date_format="iso")
-        return df
-
-
-# TODO: Integrate this API for the database
-class APIForWeatherData:
-    """Informal interface to external APIs.
-
-    The informal interface defines a blueprint for the functions to
-    be implemented by future APIs. This helps an easy exchange of the
-    used API service for the update of the database.
-
-    ¡Caution! This is not a strict interface and will be not enforced.
-    But if it looks like a duck, ... :)
-    """
-
-    @staticmethod
-    def parse(response):
-        """Parse and transform the response in a format accepted by WetterDB.
-
-        :param response: Response of API query
-        :type response: dict
-        :return: Measurements to be added to the WetterDB
-        :rtype: pd.DataFrame
-        """
-        assert type(response) == dict
-        raise NotImplementedError("Parsing is not implemented.")
-
-    @staticmethod
-    def url():
-        """URL of the API to be called by the `request` module.
-
-        The returned string is expected to have placeholders for lat, lon, tz
-        start_date and end_date e.g.
-        `result = f"https://api.example.com/weather?latitude={lat}?longitude={lon}?..."`
-
-        :return: URL of API an http request should be send to
-        :rtype: str
-        """
-        raise NotImplementedError("URL is not setup.")
-
-    @staticmethod
-    def get(qt):
-        """Get the data from REST API and parse the result.
-
-        :param qt: The request parameters for the API call
-        :type qt: QueryTicket
-        :return: Updated database with new measurements
-        :rtype: pd.DataFrame
         :raises: Exception (if response status code != 200)
         """
-        assert isinstance(qt, QueryTicket), f"Expected Queryticket, got {type(qt)}"
-        raise NotImplementedError("HTTP Get request to API not implemented.")
+        assert issubclass(api, APIForWeatherData)
 
+        # Build parameters for query
+        db = WetterDB(db_location)
+        latest = db.df.index.max()
+        now = dt.utcnow().astimezone(tz.utc)
+        qt = QueryTicket(start=latest, end=now)
 
-class OpenMeteoMeasurements(APIForWeatherData):
-    @staticmethod
-    def parse(response):
-        """Parse and tranform the response in a format accepted by WetterDB.
-
-        For details check superclass `APIForWeatherData`.
-        """
-        assert type(response) == dict
-        df = pd.DataFrame(
-            {
-                "time": [dt.strptime(x, "%Y-%m-%dT%H:%M").astimezone(tz=tz.utc) for x in response["hourly"]["time"]],
-                "temperature": response["hourly"]["temperature_2m"],
-                "wind": response["hourly"]["windspeed_10m"],
-            }
-        )
-        df = df.set_index("time")
-        return df
-
-    @staticmethod
-    def url():
-        """URL of the API to be called by the `request` module.
-
-        For details check superclass `APIForWeatherData`.
-        """
-        return (
-            "https://api.open-meteo.com/v1/forecast?"
-            + "latitude={lat:.2f}&longitude={lon:.2f}&"
-            + "timezone={tz}&start_date={start}&end_date={end}&"
-            + "hourly=temperature_2m,windspeed_10m,weathercode&current_weather=true"
-        )
-
-    @staticmethod
-    def archive():
-        """URL for archive API to be called by the `request` module.
-
-        The OpenMeteo API provides a separate API interface for historical data.
-        This URL support older datasets, but the latest data provided is a week
-        from today i.e. `datetime.utcnow()`.
-        The returned string is expected to have placeholders for lat, lon, tz
-        start_date and end_date e.g.
-        `result = f"https://api.example.com/weather?latitude={lat}?longitude={lon}?..."`
-
-        :return: URL of API an http request should be send to
-        :rtype: str
-        """
-        return (
-            "https://archive-api.open-meteo.com/v1/archive?"
-            + "latitude={lat:.2f}&longitude={lon:.2f}&"
-            + "timezone={tz}&start_date={start}&end_date={end}&"
-            + "hourly=temperature_2m,windspeed_10m"
-        )
-
-    @staticmethod
-    def get(qt):
-        """Get the data from REST API and parse the result.
-
-        For details check superclass `APIForWeatherData`.
-        """
-        assert isinstance(qt, QueryTicket)
-        url = OpenMeteoMeasurements.url()
-        api = url.format(
-            lat=qt.lat,
-            lon=qt.lon,
-            tz=qt.tz,
-            start=qt.start.strftime("%Y-%m-%d"),
-            end=qt.end.strftime("%Y-%m-%d"),
-        )
-        resp = rqs.get(api)
+        # Request data from API
+        resp = api.get(qt)
         if resp.status_code == 200:
             json = resp.json()
-            df = OpenMeteoMeasurements.parse(json)
+            df = api.parse(json)
             df = df[df.index <= qt.end]  # kick out predictions
         else:
             raise Exception(f"An error occurred during request [{resp.status_code}]: {resp.json()}")
-        return df
 
+        # Merge old and new data as well as eliminate duplicates and prediction data
+        # (Some API provide forecast data which are not of interest for us)
+        df = pd.concat([db.df, df])
+        df = df[~df.index.duplicated(keep="last")]
 
-@dataclass
-class QueryTicket:
-    """Define, check and possibly restrict request parameters for APIs.
-
-    An instance of `QueryTicket` defines the start and end date, the location
-    using lat and lon coordinate, as well as the timezone of the output.
-    The provided dataclass already supported defaults for the location
-    (i.e. Karlsruhe) and timezone (i.e. UTC).
-    Some consistency checks e.g. start date <= end date are done at creation.
-
-    :param start: Start date of the measurements to be queried
-    :type start: datetime.date
-    :param end: End date of the measurements to be queried
-    :type end: datetime.date
-    :param lat: Latitude position of the measurements to be queried
-    :type lat: float
-    :param lon: Longitude position of the measurements to be queried
-    :type lon: float
-    :param tz: Timezone of the measurements to be queried
-    :type tz: str
-    """
-
-    start: dt.date
-    end: dt.date
-    lat: float = 49
-    lon: float = 8.41
-    tz: str = "UTC"
-
-    def __post_init__(self):
-        if self.start > self.end:
-            tmp = self.start
-            self.start = self.end
-            self.end = tmp
+        if not dry_run:
+            df.T.to_json(db_location, orient="split", date_format="iso")
+        db.df = df
+        return db

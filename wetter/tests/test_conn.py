@@ -50,8 +50,7 @@ def test_to_old():
     end = dt.now()
     qt = conn.QueryTicket(start=start, end=end)
 
-    with pytest.raises(Exception):
-        conn.OpenMeteoMeasurements.get(qt)
+    assert conn.OpenMeteoMeasurements.get(qt).status_code != 200
 
 
 def test_query_ticket_reversed_dates():
