@@ -1,7 +1,5 @@
-import datetime
-from datetime import datetime as dt
+from datetime import datetime as dt, timezone as tz
 from datetime import timedelta
-from datetime import timezone as tz
 
 import pytest
 
@@ -29,7 +27,7 @@ def test_latest_measurement_context_outside(db):
 
 
 def test_latest_measurement_utc_cest(db):
-    berlin = datetime.timezone(timedelta(hours=2))
+    berlin = tz(timedelta(hours=2))
     date = dt(year=2023, month=2, day=2, hour=15, minute=2, tzinfo=berlin)
     df = queries.latest_datapoint(db.df, date)
     assert df.index.size == 1

@@ -9,8 +9,7 @@ from . import __version__
 
 
 def main():
-    parser = get_parser()
-    args = parser.parse_args()
+    args = parse_args()
     db = conn.get_db()
     now = dt.utcnow().astimezone(tz.utc)
 
@@ -48,3 +47,10 @@ def get_parser():
     detailed_cmp_parser = subparsers.add_parser("compare-details", help="Compare today w/ specific month")
     detailed_cmp_parser.add_argument("month", type=int, choices=range(1, 13), help="Month")
     return parser
+
+def parse_args(args):
+    parser = get_parser()
+    args = parser.parse_args(args)
+    if args.cmd is None:
+        args.cmd = "latest"
+    return args

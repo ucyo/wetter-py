@@ -9,6 +9,9 @@ def test_get_parser():
 
 
 def test_empty():
-    p = cli.get_parser()
-    args = p.parse_args([])
-    assert args.cmd is None
+    args = cli.parse_args([])
+    assert args.cmd is "latest"
+
+def test_compare():
+    with pytest.raises(SystemExit):
+        args = cli.parse_args(["compare"])
