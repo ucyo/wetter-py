@@ -25,6 +25,7 @@ line-length = 120
 [tool.pytest.ini_options]
 markers = [
     "web: mark tests as web (deselect with '-m \"not web\"')",
+    "long: mark tests which take a long time (deselect with '-m \"not long\"')",
 ]
 
 [tool.isort]
