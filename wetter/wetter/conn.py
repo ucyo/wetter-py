@@ -50,15 +50,6 @@ def now():
     return dt.now().replace(tzinfo=pytz.FixedOffset(UTC_OFFSET_USER_TZ / 60))
 
 
-def get_db():
-    """Return the database with all measurements.
-
-    :return: Database of measurements
-    :rtype: WetterDB
-    """
-    return WetterDB(DB)
-
-
 class APIForWeatherData:
     """Informal interface to external APIs.
 

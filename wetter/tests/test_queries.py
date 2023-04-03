@@ -11,12 +11,12 @@ from datetime import timezone as tz
 
 import pytest
 
-from wetter import conn, queries
+from wetter import config, queries
 
 
 @pytest.fixture
 def db():
-    db = conn.get_db()
+    db = config.Configuration().get_store()
     yield db
 
 
