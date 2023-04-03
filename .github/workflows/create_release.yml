@@ -1,0 +1,80 @@
+name: Create a new release of the package
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+        - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+        - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+        - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+        - name: Check out repository code
+          uses: actions/checkout@v3
+        - name: Install Poetry
+          run: pipx install poetry
+        - uses: actions/setup-python@v4
+          with:
+            python-version: '3.10'
+            cache: 'poetry'
+        - name: Install package
+          shell: bash
+          working-directory: ./wetter
+          run: poetry install --no-interaction --no-ansi -vv
+        - name: Activate environment
+          working-directory: ./wetter
+          shell: bash
+          run: |
+            if [ "$RUNNER_OS" == "Windows" ]; then
+                source $(poetry env info --path)\\Scripts\\activate;
+            else
+                source $(poetry env info --path)/bin/activate;
+            fi
+            python -c "import wetter"
+        - name: Build package
+          shell: bash
+          working-directory: ./wetter
+          run: poetry build --no-interaction --no-ansi -vv
+        - name: Get current version of library from poetry
+          shell: bash
+          working-directory: ./wetter
+          run: echo "version=$(poetry version --short)" >> $GITHUB_OUTPUT
+          id: poetry
+        - name: Get current version from tags
+          shell: bash
+          run: echo "version=$(echo ${GITHUB_REF#refs/tags/})" >> $GITHUB_OUTPUT
+          id: tag
+        - name: Check that module version from tag and poetry match
+          env:
+              POETRY_VERSION: ${{ steps.poetry.outputs.version }}
+              TAG_VERSION: ${{ steps.tag.outputs.version }}
+          run: |
+            [[ v$POETRY_VERSION == $TAG_VERSION ]]
+        - name: Check if prerelease or not
+          id: check-version
+          run: |
+            [[ "$(poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+              || echo name=prerelease::true >> $GITHUB_OUTPUT
+        - name: Create release
+          uses: ncipollo/release-action@v1.12.0
+          with:
+            artifacts: "./wetter/dist/*"
+            token: ${{ secrets.GITHUB_TOKEN }}
+            draft: true
+            prerelease: steps.check-version.outputs.prerelease == 'true'
+        - name: Publish to PyPI
+          working-directory: ./wetter
+          env:
+            POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI }}
+          run: poetry publish --no-interaction --no-ansi -vv
+        - name: Publish to Dockerhub
+          shell: bash
+          working-directory: ./cicd-workflows
+          env:
+            DOCKER_TAG: ${{ steps.poetry.outputs.version }}
+            DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+            DOCKER_SECRET: ${{ secrets.DOCKER_SECRET }}
+          run: ./build-and-push-docker-images.sh

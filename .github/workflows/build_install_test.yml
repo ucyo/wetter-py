@@ -1,0 +1,47 @@
+name: Build, Install and Test
+on:
+  push:
+    branches: [devel]
+  pull_request:
+    branches: [devel]
+jobs:
+  build-install-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - run: echo "💾 ${{ matrix.os }} | 🐍 ${{ matrix.python-version }} | 📖 ${{ matrix.poetry-version }}"
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - name: Install package
+        working-directory: ./wetter
+        run: poetry install --no-interaction --no-ansi -vv
+      - name: Activate Environment
+        working-directory: ./wetter
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              source $(poetry env info --path)\\Scripts\\activate;
+          else
+              source $(poetry env info --path)/bin/activate;
+          fi
+          python -c "import wetter"
+      # - name: Run cli tool wetter
+      #   run: |
+      #     wetter latest
+      - name: Run PyTest
+        shell: bash
+        working-directory: ./wetter
+        run: poetry run pytest .

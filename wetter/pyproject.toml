@@ -1,15 +1,14 @@
 [tool.poetry]
 name = "wetter"
-version = "0.1.1"
-description = ""
-authors = ["Your Name <you@example.com>"]
+version = "0.2.0-rc.1"
+description = "CLI tool to parse weather data"
+authors = ["Uğur Çayoğlu <cayoglu@me.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
 pandas = "^1.5.3"
 requests = "^2.28.2"
-
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
