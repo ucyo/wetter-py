@@ -5,8 +5,9 @@ Additionally it needs to be tested if the arguments and return values
 for the functions are the same. Details about the queries can be found
 in the appropiate documentation of the [wetter library](../wetter/queries.py).
 """
-from datetime import datetime as dt, timezone as tz
+from datetime import datetime as dt
 from datetime import timedelta
+from datetime import timezone as tz
 
 import pytest
 
