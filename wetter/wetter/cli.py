@@ -16,7 +16,7 @@ from . import __version__
 
 
 def main():
-    """Parse user query and return answer from database to user."""
+    """Parse user query and and pretty print answer from the database."""
     args = parse_args()
     db = conn.get_db()
     now = dt.utcnow().astimezone(tz.utc)
@@ -88,6 +88,11 @@ def parse_args(args=None):
 
 
 def pretty_print_latest(latest):
+    """Pretty print the output of the latest measurement.
+
+    :params latest: Latest measurement from database
+    :type latest: pd.DataFrame
+    """
     t_now = latest.temperature[0]
     w_now = latest.wind[0]
     msg = f"Currently it is 🌡️ {t_now:.1f}°C and windspeed 🌬️ {w_now:.1f} km/h."
@@ -96,19 +101,36 @@ def pretty_print_latest(latest):
 
 
 def pretty_print_comparison(latest, average, mode):
+    """Pretty print the output of a comparison query.
+
+    :params latest: Latest measurement from database
+    :type latest: pd.DataFrame
+    :params average: Average measurements of a certain time window
+    :type average: pd.DataFrame
+    :params mode: Window definition either 'week','month' or 'year'
+    :type mode: str
+    """
     mode = mode.lower()
     assert mode in ("week", "year", "month")
-    temp_avg = average.temperature[0]
-    temp_now = latest.temperature[0]
+    variable = "temperature"
+
+    temp_avg = average[variable][0]
+    temp_now = latest[variable][0]
     diff = temp_avg - temp_now
     relation = "colder" if diff < 0 else "warmer"
     relation = "same" if diff == 0 else relation
+
     msg = f"It was on average {diff:.1f}°C {relation} last {mode} ({temp_avg:.1f}°C) then today ({temp_now:.1f}°C)"
     print(msg)
     print_disclaimer_window(average)
 
 
 def pretty_print_detailed_comparison(window):
+    """Pretty print the output of a detailed month window comparison.
+
+    :params window: Measurement within a certain month
+    :type latest: pd.DataFrame
+    """
     variable = "temperature"
     overall_average = window.mean()[variable]
     daily_average = {data.index[0]: data.mean()[variable] for (day, data) in window.groupby(window.index.day)}
@@ -121,9 +143,15 @@ def pretty_print_detailed_comparison(window):
     for day, temp in hotter_days.items():
         day_str = day.strftime("%Y-%m-%d")
         print(f"{day_str} @ {temp:.1f}°C")
+    print_disclaimer_window(window)
 
 
 def print_disclaimer_latest(latest):
+    """Disclaimer about the data the calculations are based upon.
+
+    :params latest: Latest measurement from database
+    :type latest: pd.DataFrame
+    """
     date = latest.index[0].strftime("%Y-%m-%d")
     time = latest.index[0].strftime("%I:%M%p")
     disclaimer = f"Latest measurement on 📅 {date} @ {time} in Karlsruhe."
@@ -131,6 +159,11 @@ def print_disclaimer_latest(latest):
 
 
 def print_disclaimer_window(window):
+    """Disclaimer about the data the calculations are based upon.
+
+    :params window: Measurement within a certain month
+    :type latest: pd.DataFrame
+    """
     num = window.index.size
     start = window.index.min().strftime("%Y-%m-%d")
     end = window.index.max().strftime("%Y-%m-%d")
