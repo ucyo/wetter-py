@@ -20,10 +20,11 @@ def main():
     args = parse_args()
     db = conn.get_db()
     now = dt.utcnow().astimezone(tz.utc)
+    latest = qu.latest_datapoint(db.df, now)
 
     if args.cmd == "update":
         conn.WetterDB.update(conn.DB)
-        print("Updated DB")
+        print("Update successful!")
     elif args.cmd == "compare":
         if args.week:
             print(qu.last_week(db.df, now))
@@ -34,7 +35,7 @@ def main():
     elif args.cmd == "compare-details":
         print(qu.specific_month(db.df, now, args.month))
     elif args.cmd == "latest":
-        print(qu.latest_datapoint(db.df, now))
+        pretty_print_latest(latest)
     else:
         raise Exception(f"Can not understand the provided subcommand {args.cmd}")
 
@@ -80,6 +81,23 @@ def parse_args(args=None):
     if args.cmd is None:
         args.cmd = "latest"
     return args
+
+
+def pretty_print_latest(latest):
+    t_now = latest.temperature[0]
+    w_now = latest.wind[0]
+    msg = f"Currently it is 🌡️ {t_now:.1f}°C and windspeed 🌬️ {w_now:.1f} km/h."
+    print(msg)
+    print_disclaimer_latest(latest)
+
+    print(msg)
+
+def print_disclaimer_latest(latest):
+    date = latest.index[0].strftime("%Y-%m-%d")
+    time = latest.index[0].strftime("%I:%M%p")
+    disclaimer = f"Latest measurement on 📅 {date} @ {time} in Karlsruhe."
+    print(disclaimer)
+    print(disclaimer)
 
 
 if __name__ == "__main__":
