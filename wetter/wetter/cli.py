@@ -27,11 +27,14 @@ def main():
         print("Update successful!")
     elif args.cmd == "compare":
         if args.week:
-            print(qu.last_week(db.df, now))
+            average = qu.last_week(db.df, now)
+            pretty_print_comparison(latest=latest, average=average, mode="week")
         if args.month:
-            print(qu.last_month(db.df, now))
+            average = qu.last_month(db.df, now)
+            pretty_print_comparison(latest=latest, average=average, mode="month")
         if args.year:
-            print(qu.last_year(db.df, now))
+            average = qu.last_year(db.df, now)
+            pretty_print_comparison(latest=latest, average=average, mode="year")
     elif args.cmd == "compare-details":
         print(qu.specific_month(db.df, now, args.month))
     elif args.cmd == "latest":
@@ -90,13 +93,32 @@ def pretty_print_latest(latest):
     print(msg)
     print_disclaimer_latest(latest)
 
+
+def pretty_print_comparison(latest, average, mode):
+    mode = mode.lower()
+    assert mode in ("week", "year", "month")
+    temp_avg = average.temperature[0]
+    temp_now = latest.temperature[0]
+    diff = temp_avg - temp_now
+    relation = "colder" if diff < 0 else "warmer"
+    relation = "same" if diff == 0 else relation
+    msg = f"It was on average {diff:.1f}°C {relation} last {mode} ({temp_avg:.1f}°C) then today ({temp_now:.1f}°C)"
     print(msg)
+    print_disclaimer_window(average)
 
 def print_disclaimer_latest(latest):
     date = latest.index[0].strftime("%Y-%m-%d")
     time = latest.index[0].strftime("%I:%M%p")
     disclaimer = f"Latest measurement on 📅 {date} @ {time} in Karlsruhe."
     print(disclaimer)
+
+
+def print_disclaimer_window(window):
+    num = window.index.size
+    start = window.index.min().strftime("%Y-%m-%d")
+    end = window.index.max().strftime("%Y-%m-%d")
+
+    disclaimer = f"Average was calculated using #{num} measurements between 📅 {start} - {end} in Karlsruhe."
     print(disclaimer)
 
 
