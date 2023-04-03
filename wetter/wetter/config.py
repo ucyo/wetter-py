@@ -35,8 +35,8 @@ BASE_STORE = {
     "version": 1,
     "data": {
         "index": ["temperature", "wind"],
-        "columns": ["2022-01-01T00:00:00.000000+0000", "2022-01-01T01:00:00.000000+0000"],
-        "data": [[9.2, 9.5], [3.8, 4.3]],
+        "columns": ["2023-01-01T00:00:00.000000+0000", "2023-01-01T01:00:00.000000+0000"],
+        "data": [[7.7, 12.7], [6.8, 13.0]],
     },
 }
 
@@ -80,7 +80,7 @@ class Configuration:
         self.store.df = df
         self.store.lat = lat
         self.store.lon = lon
-        self.store.update()
+        # self.store.update()
         to_store(self.store)
 
     def load_config(self):

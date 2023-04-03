@@ -13,12 +13,12 @@ from datetime import datetime as dt
 import pandas as pd
 import pytest
 
-from wetter import conn
+from wetter import config
 
 
 @pytest.fixture
 def db():
-    db = conn.get_db()
+    db = config.Configuration().get_store()
     yield db.df
 
 
