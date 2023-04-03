@@ -36,7 +36,8 @@ def main():
             average = qu.last_year(db.df, now)
             pretty_print_comparison(latest=latest, average=average, mode="year")
     elif args.cmd == "compare-details":
-        print(qu.specific_month(db.df, now, args.month))
+        average = qu.specific_month(db.df, now, args.month)
+        pretty_print_detailed_comparison(average)
     elif args.cmd == "latest":
         pretty_print_latest(latest)
     else:
@@ -105,6 +106,22 @@ def pretty_print_comparison(latest, average, mode):
     msg = f"It was on average {diff:.1f}°C {relation} last {mode} ({temp_avg:.1f}°C) then today ({temp_now:.1f}°C)"
     print(msg)
     print_disclaimer_window(average)
+
+
+def pretty_print_detailed_comparison(window):
+    variable = "temperature"
+    overall_average = window.mean()[variable]
+    daily_average = {data.index[0]: data.mean()[variable] for (day, data) in window.groupby(window.index.day)}
+    hotter_days = {k: v for k, v in daily_average.items() if v > overall_average}
+
+    month = window.index[0].strftime("%B %Y")
+    msg = f"It was on average 🌡️ {overall_average:.1f}°C in 📅 {month}."
+    print(msg)
+    print(f"The following {len(hotter_days)} days were hotter 🔥 than the average:")
+    for day, temp in hotter_days.items():
+        day_str = day.strftime("%Y-%m-%d")
+        print(f"{day_str} @ {temp:.1f}°C")
+
 
 def print_disclaimer_latest(latest):
     date = latest.index[0].strftime("%Y-%m-%d")
