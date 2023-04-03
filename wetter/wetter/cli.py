@@ -60,7 +60,7 @@ def get_parser():
     return parser
 
 
-def parse_args(args):
+def parse_args(args=None):
     """Parse arguments from the command line.
 
     This is a wrapper around the `argparse` argument parser.
@@ -73,7 +73,10 @@ def parse_args(args):
     :rtype: `argparse.Namespace`
     """
     parser = get_parser()
-    args = parser.parse_args(args)
+    if args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args)
     if args.cmd is None:
         args.cmd = "latest"
     return args
