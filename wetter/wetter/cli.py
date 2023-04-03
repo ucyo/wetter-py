@@ -6,8 +6,6 @@ the backend using this interface incl. updating of the database.
 """
 
 import argparse
-from datetime import datetime as dt
-from datetime import timezone as tz
 
 from wetter import conn
 from wetter import queries as qu
@@ -19,7 +17,7 @@ def main():
     """Parse user query and and pretty print answer from the database."""
     args = parse_args()
     db = conn.get_db()
-    now = dt.utcnow().astimezone(tz.utc)
+    now = conn.now()
     latest = qu.latest_datapoint(db.df, now)
 
     if args.cmd == "update":
@@ -97,7 +95,7 @@ def pretty_print_latest(latest):
     w_now = latest.wind[0]
     msg = f"Currently it is 🌡️ {t_now:.1f}°C and windspeed 🌬️ {w_now:.1f} km/h."
     print(msg)
-    print_disclaimer_latest(latest)
+    # print_disclaimer_latest(latest)
 
 
 def pretty_print_comparison(latest, average, mode):
@@ -122,7 +120,7 @@ def pretty_print_comparison(latest, average, mode):
 
     msg = f"It was on average {diff:.1f}°C {relation} last {mode} ({temp_avg:.1f}°C) then today ({temp_now:.1f}°C)"
     print(msg)
-    print_disclaimer_window(average)
+    # print_disclaimer_window(average)
 
 
 def pretty_print_detailed_comparison(window):
@@ -131,6 +129,7 @@ def pretty_print_detailed_comparison(window):
     :params window: Measurement within a certain month
     :type latest: pd.DataFrame
     """
+    window.index = window.index.map(lambda x: x.astimezone(conn.now().tzinfo))
     variable = "temperature"
     overall_average = window.mean()[variable]
     daily_average = {data.index[0]: data.mean()[variable] for (day, data) in window.groupby(window.index.day)}
@@ -143,7 +142,7 @@ def pretty_print_detailed_comparison(window):
     for day, temp in hotter_days.items():
         day_str = day.strftime("%Y-%m-%d")
         print(f"{day_str} @ {temp:.1f}°C")
-    print_disclaimer_window(window)
+    # print_disclaimer_window(window)
 
 
 def print_disclaimer_latest(latest):
@@ -152,9 +151,10 @@ def print_disclaimer_latest(latest):
     :params latest: Latest measurement from database
     :type latest: pd.DataFrame
     """
+    latest.index = latest.index.map(lambda x: x.astimezone(conn.now().tzinfo))
     date = latest.index[0].strftime("%Y-%m-%d")
     time = latest.index[0].strftime("%I:%M%p")
-    disclaimer = f"Latest measurement on 📅 {date} @ {time} in Karlsruhe."
+    disclaimer = f"Latest measurement on 📅 {date} @ {time}."
     print(disclaimer)
 
 
@@ -164,11 +164,12 @@ def print_disclaimer_window(window):
     :params window: Measurement within a certain month
     :type latest: pd.DataFrame
     """
+    window.index = window.index.map(lambda x: x.astimezone(conn.now().tzinfo))
     num = window.index.size
     start = window.index.min().strftime("%Y-%m-%d")
     end = window.index.max().strftime("%Y-%m-%d")
 
-    disclaimer = f"Average was calculated using #{num} measurements between 📅 {start} - {end} in Karlsruhe."
+    disclaimer = f"Average was calculated using #{num} measurements between 📅 {start} - {end}."
     print(disclaimer)
 
 

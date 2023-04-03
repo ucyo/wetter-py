@@ -14,5 +14,5 @@ while inotifywait -q -e modify -e create -e delete -e move --recursive /wetter/ 
     echo "===================================================================="; \
     echo "Formatting and linting"; \
     echo "===================================================================="; \
-    pytest -m "not web" --cov=/wetter --cov-report=term-missing --no-cov-on-fail; \
+    pytest -m "not (web or long)" --cov=/wetter --cov-report=term-missing --no-cov-on-fail; \
 done

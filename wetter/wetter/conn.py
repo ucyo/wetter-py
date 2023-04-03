@@ -26,6 +26,8 @@ This allows for an easy interchange of APIs.
 
 import json
 import os
+import time
+import pytz
 from dataclasses import dataclass
 from datetime import datetime as dt
 from datetime import timezone as tz
@@ -38,6 +40,17 @@ from pytz import UTC
 # Gather absolute path of json file based on its relative position
 DATA_LOCATION = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
 DB = os.path.join(DATA_LOCATION, "data.json")
+
+# UTC offset of user timezone
+UTC_OFFSET_USER_TZ = -time.altzone if time.daylight else -time.timezone
+
+
+def utcnow():
+    return dt.utcnow().replace(tzinfo=tz.utc)
+
+
+def now():
+    return dt.now().replace(tzinfo=pytz.FixedOffset(UTC_OFFSET_USER_TZ / 60))
 
 
 def get_db():
@@ -214,6 +227,7 @@ class WetterDB:
         assert self.df.ndim == 2
         assert self.df.shape[1] == 2
         assert self.df.index.size > 0
+        assert self.df.index[0].tzinfo is not None
         assert self.df.index[0].tzinfo == UTC
 
     def __getattr__(self, name):

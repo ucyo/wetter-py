@@ -40,3 +40,12 @@ def test_latest_measurement_utc_cest(db):
     df = queries.latest_datapoint(db.df, date)
     assert df.index.size == 1
     assert df.index[0] == date.replace(hour=13, minute=0, tzinfo=tz.utc)
+
+
+@pytest.mark.long
+def test_queries_considering_timezones(db):
+    before = db.df[(db.df.index.month == 1) & (db.df.index.year == 2022)].mean()
+    db.df.index = db.df.index.map(lambda x: x.astimezone(7200))
+    after = db.df[(db.df.index.month == 1) & (db.df.index.year == 2022)].mean()
+    assert before["temperature"] != after["temperature"]
+    assert before["wind"] != after["wind"]
