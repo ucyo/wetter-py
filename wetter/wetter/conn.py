@@ -27,7 +27,8 @@ This allows for an easy interchange of APIs.
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime as dt, timezone as tz
+from datetime import datetime as dt
+from datetime import timezone as tz
 
 import numpy as np
 import pandas as pd

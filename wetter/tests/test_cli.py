@@ -6,8 +6,9 @@ It is responsible for the following tasks:
 - Catching of unallowed commands
 - Expected default behviour application if variables/commands are forgotten
 """
-import pytest
 from argparse import ArgumentParser
+
+import pytest
 
 from wetter import cli
 
