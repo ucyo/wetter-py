@@ -9,8 +9,12 @@ It allows for querying for the following data:
 - Measurements for a specific month (either of this year if the month already
   passed or of last year)
 
-The library is split to three separate submodules.
+The library is split to four separate submodules.
 Each of these submodules are responsible for different aspects of the systems.
+The [config.py](./config.py) is responsible for the configuration of the application.
+It checks for configuration files and if necessary creates them. It also
+checks for changes in the configurations and if necessary redownloads the data
+from the weather API services of external resources.
 The [conn.py](./conn.py) is responsible for the backend.
 It handles the connection to the database and unifies the input and output.
 The [queries.py](./queries.py) is responsible for querying the

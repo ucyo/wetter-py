@@ -6,6 +6,7 @@ The structure is the same as the package folder itself.
 Therefore it consists of three test files.
 Each corrosponding to the three modules of the wetter package:
 
+- `test_config.py` for testing the configuration parsing of the application
 - `test_cli.py` for testing the command line application
 - `test_conn.py` for testing the backend connection (database and measurement APIs)
 - `test_queries.py` for testing the queries on the backend database

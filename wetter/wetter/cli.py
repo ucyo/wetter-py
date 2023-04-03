@@ -7,7 +7,7 @@ the backend using this interface incl. updating of the database.
 
 import argparse
 
-from wetter import conn
+from wetter import config, conn
 from wetter import queries as qu
 
 from . import __version__
@@ -16,12 +16,13 @@ from . import __version__
 def main():
     """Parse user query and and pretty print answer from the database."""
     args = parse_args()
-    db = conn.get_db()
+    db = config.Configuration().get_store()
     now = conn.now()
     latest = qu.latest_datapoint(db.df, now)
 
     if args.cmd == "update":
-        conn.WetterDB.update(conn.DB)
+        db.update()
+        config.to_store(db)
         print("Update successful!")
     elif args.cmd == "compare":
         if args.week:
