@@ -6,8 +6,8 @@ as `pandas` and a `date` object used for context. Some functions might define
 additional parameters for context. All of these functions share the same
 output type. This allows the chaining of queries.
 """
-from datetime import timedelta
 from datetime import datetime as dt
+from datetime import timedelta
 
 
 def latest_datapoint(df, date):
@@ -66,7 +66,7 @@ def last_month(df, date):
         year, month = (date.year - 1, 12)
     start = dt(year=year, month=month, day=1, tzinfo=date.tzinfo)
     days_of_month = 33 - (start + timedelta(days=33)).day
-    end = start.replace(month=start.month, day=days_of_month, hour=23, minut=59, second=59)
+    end = start.replace(month=start.month, day=days_of_month, hour=23, minute=59, second=59)
     result = _windowed_selection(df, start, end)
     return result
 
@@ -112,7 +112,7 @@ def specific_month(df, date, month):
     year = date.year if date.month > month else date.year - 1
     start = dt(year=year, month=month, day=1, tzinfo=date.tzinfo)
     days_of_month = 33 - (start + timedelta(days=33)).day
-    end = start.replace(month=start.month, day=days_of_month, hour=23, minut=59, second=59)
+    end = start.replace(month=start.month, day=days_of_month, hour=23, minute=59, second=59)
     result = _windowed_selection(df, start, end)
     return result
 

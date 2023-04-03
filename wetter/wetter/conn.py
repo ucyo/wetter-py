@@ -24,18 +24,15 @@ All API services need to be subclasses of `APIForWeatherData`.
 This allows for an easy interchange of APIs.
 """
 
-import json
 import os
 import time
-import pytz
 from dataclasses import dataclass
 from datetime import datetime as dt
 from datetime import timezone as tz
 
-import numpy as np
 import pandas as pd
+import pytz
 import requests as rqs
-from pytz import UTC
 
 # Gather absolute path of json file based on its relative position
 DATA_LOCATION = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
@@ -112,10 +109,61 @@ class APIForWeatherData:
         raise NotImplementedError("HTTP Get request to API not implemented.")
 
 
+class OpenMeteoArchiveMeasurements(APIForWeatherData):
+    @staticmethod
+    def parse(response):
+        """Parse and transform the response in a format accepted by WetterDB.
+
+        For details check superclass `APIForWeatherData`.
+        """
+        assert type(response) == dict
+        df = pd.DataFrame(
+            {
+                "time": [dt.strptime(x, "%Y-%m-%dT%H:%M").astimezone(tz=tz.utc) for x in response["hourly"]["time"]],
+                "temperature": response["hourly"]["temperature_2m"],
+                "wind": response["hourly"]["windspeed_10m"],
+            }
+        )
+        df = df.set_index("time")
+        return df
+
+    @staticmethod
+    def url(qt):
+        """URL of the API to be called.
+
+        For details check superclass `APIForWeatherData`.
+        """
+        assert isinstance(qt, QueryTicket), f"Expected Queryticket, got {type(qt)}"
+        url = (
+            "https://archive-api.open-meteo.com/v1/archive?"
+            + "latitude={lat:.2f}&longitude={lon:.2f}&"
+            + "timezone={tz}&start_date={start}&end_date={end}&"
+            + "hourly=temperature_2m,windspeed_10m"
+        )
+        return url.format(
+            lat=qt.lat,
+            lon=qt.lon,
+            tz=qt.tz,
+            start=qt.start.strftime("%Y-%m-%d"),
+            end=qt.end.strftime("%Y-%m-%d"),
+        )
+
+    @staticmethod
+    def get(qt):
+        """Get the data from REST API and parse the result.
+
+        For details check superclass `APIForWeatherData`.
+        """
+        assert isinstance(qt, QueryTicket)
+        url = OpenMeteoArchiveMeasurements.url(qt)
+        result = rqs.get(url)
+        return result
+
+
 class OpenMeteoMeasurements(APIForWeatherData):
     @staticmethod
     def parse(response):
-        """Parse and tranform the response in a format accepted by WetterDB.
+        """Parse and transform the response in a format accepted by WetterDB.
 
         For details check superclass `APIForWeatherData`.
         """
@@ -169,8 +217,6 @@ class QueryTicket:
 
     An instance of `QueryTicket` defines the start and end date, the location
     using lat and lon coordinate, as well as the timezone of the output.
-    The provided dataclass already supported defaults for the location
-    (i.e. Karlsruhe) and timezone (i.e. UTC).
     Some consistency checks e.g. start date <= end date are done at creation.
 
     :param start: Start date of the measurements to be queried
@@ -181,14 +227,14 @@ class QueryTicket:
     :type lat: float
     :param lon: Longitude position of the measurements to be queried
     :type lon: float
-    :param tz: Timezone of the measurements to be queried
+    :param tz: Timezone of the measurements to be queried [default: UTC]
     :type tz: str
     """
 
     start: dt.date
     end: dt.date
-    lat: float = 49
-    lon: float = 8.41
+    lat: float
+    lon: float
     tz: str = "UTC"
 
     def __post_init__(self):
@@ -199,11 +245,23 @@ class QueryTicket:
 
 
 class WetterDB:
-    """Database of weather measurements for a single location."""
+    """Database of weather measurements for a single location.
 
-    def __init__(self, filename):
-        with open(filename, "r") as f:
-            self._raw_data = json.load(f)
+    :param version: Version of current definition of schema
+    :type version: int
+    :param lat: Latitude position of the measurements to be queried
+    :type lat: float
+    :param lon: Longitude position of the measurements to be queried
+    :type lon: float
+    :param data: Key/Value store of pd.DataFrame (read from json)
+    :type dict:
+    """
+
+    def __init__(self, version, lat, lon, data):
+        self.version = version
+        self.lat = lat
+        self.lon = lon
+        self._raw_data = data
 
         # Setup the measurements (flexibel for future updates)
         number_of_measurements = len(self._raw_data["data"])
@@ -212,10 +270,17 @@ class WetterDB:
         # Setup dataframe
         df = pd.DataFrame({"time": self._raw_data["columns"], **measurements})
         df = df.set_index("time")
-        df.index = df.index.astype(np.datetime64).tz_localize("UTC")
 
         self.df = df
         self.check_df()
+
+    def serialize(self):
+        """Serialization of the entire data structure."""
+        result = dict(data=self.df.T.to_dict(orient="split"))
+        result["lat"] = self.lat
+        result["lon"] = self.lon
+        result["version"] = self.version
+        return result
 
     def check_df(self):
         """Check assumptions about the database and its structure/schema.
@@ -228,7 +293,6 @@ class WetterDB:
         assert self.df.shape[1] == 2
         assert self.df.index.size > 0
         assert self.df.index[0].tzinfo is not None
-        assert self.df.index[0].tzinfo == UTC
 
     def __getattr__(self, name):
         """Get attribute from inner `pd.DataFrame` if not provided by base class.
@@ -250,27 +314,20 @@ class WetterDB:
         except KeyError:
             return getattr(self.df, name)
 
-    @staticmethod
-    def update(db_location, api=OpenMeteoMeasurements, dry_run=False):
+    def update(self, api=OpenMeteoMeasurements):
         """Update of a database at a given location.
 
-        :param db_location: Database location
-        :type db_location: str
         :param api: API to be used for measurement updates
         :type api: APIForWeatherData
-        :param dry_run: Write update on to disk (default) or not
-        :type dry_run: bool
         :return: Latest and updated weather measurements
         :rtype: pd.DataFrame
         :raises: Exception (if response status code != 200)
         """
         assert issubclass(api, APIForWeatherData)
-
         # Build parameters for query
-        db = WetterDB(db_location)
-        latest = db.df.index.max()
-        now = dt.utcnow().astimezone(tz.utc)
-        qt = QueryTicket(start=latest, end=now)
+        latest = self.df.index.max()
+        now = utcnow()
+        qt = QueryTicket(start=latest, end=now, lat=self.lat, lon=self.lon)
 
         # Request data from API
         resp = api.get(qt)
@@ -283,10 +340,6 @@ class WetterDB:
 
         # Merge old and new data as well as eliminate duplicates and prediction data
         # (Some API provide forecast data which are not of interest for us)
-        df = pd.concat([db.df, df])
+        df = pd.concat([self.df, df])
         df = df[~df.index.duplicated(keep="last")]
-
-        if not dry_run:
-            df.T.to_json(db_location, orient="split", date_format="iso")
-        db.df = df
-        return db
+        self.df = df
