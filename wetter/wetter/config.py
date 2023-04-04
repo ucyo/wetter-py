@@ -28,7 +28,7 @@ APPAUTHOR = "ucyo"
 DEFAULT_LAT = 49
 DEFAULT_LON = 8.41
 
-BASE_CONFIG = {"max_distance": 1, "location": {"lat": DEFAULT_LAT, "lon": DEFAULT_LON}}
+BASE_CONFIG = {"location": {"lat": DEFAULT_LAT, "lon": DEFAULT_LON}}
 
 BASE_STORE = {
     "lat": DEFAULT_LAT,
