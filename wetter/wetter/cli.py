@@ -35,9 +35,9 @@ def main():
         if args.year:
             average = qu.last_year(db.df, now)
             pretty_print_comparison(latest=latest, average=average, mode="year")
-    elif args.cmd == "compare-details":
-        average = qu.specific_month(db.df, now, args.month)
-        pretty_print_detailed_comparison(average)
+        if args.detailed:
+            average = qu.specific_month(df=db.df, date=now, month=args.detailed)
+            pretty_print_detailed_comparison(average)
     elif args.cmd == "latest":
         pretty_print_latest(latest)
     elif args.cmd == "configure":
@@ -67,8 +67,7 @@ def get_parser():
     group.add_argument("--last-week", action="store_true", dest="week", help="Compare w/ last week")
     group.add_argument("--last-year", action="store_true", dest="year", help="Compare w/ last year")
     group.add_argument("--last-month", action="store_true", dest="month", help="Compare w/ last month")
-    detailed_cmp_parser = subparsers.add_parser("compare-details", help="Compare today w/ specific month")
-    detailed_cmp_parser.add_argument("month", type=int, choices=range(1, 13), help="Month")
+    group.add_argument("--month", type=int, choices=range(1, 13), dest="detailed", help="Month")
     confparser = subparsers.add_parser("configure", help="Configuration of the tool")
     gconf = confparser.add_mutually_exclusive_group(required=True)
     gconf.add_argument("--systemd", action="store_true", help="Show systemd profile")

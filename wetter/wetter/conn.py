@@ -24,7 +24,6 @@ All API services need to be subclasses of `APIForWeatherData`.
 This allows for an easy interchange of APIs.
 """
 
-import os
 import time
 from dataclasses import dataclass
 from datetime import datetime as dt
@@ -33,10 +32,6 @@ from datetime import timezone as tz
 import pandas as pd
 import pytz
 import requests as rqs
-
-# Gather absolute path of json file based on its relative position
-DATA_LOCATION = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
-DB = os.path.join(DATA_LOCATION, "data.json")
 
 # UTC offset of user timezone
 UTC_OFFSET_USER_TZ = -time.altzone if time.daylight else -time.timezone
