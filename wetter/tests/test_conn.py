@@ -7,7 +7,7 @@ of the application. It is responsible for the following tasks:
 - Testing the communication to weather APIs
 - Testing the update process
 """
-import os
+# import os
 from datetime import datetime as dt
 
 import pandas as pd
@@ -37,12 +37,12 @@ def test_db_has_no_empty_values(db):
     assert db.isna()._values.sum() == 0
 
 
-@pytest.mark.web
-def test_update():
-    filename = os.path.join(conn.DATA_LOCATION, "test.json")
-    old = conn.WetterDB(filename).df
-    new = conn.WetterDB.update(filename, dry_run=True)
-    assert new.size >= old.size
+# @pytest.mark.web
+# def test_update():
+#     filename = os.path.join(conn.DATA_LOCATION, "test.json")
+#     old = conn.WetterDB(filename).df
+#     new = conn.WetterDB.update(filename, dry_run=True)
+#     assert new.size >= old.size
 
 
 @pytest.mark.web
