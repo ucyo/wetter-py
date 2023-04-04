@@ -23,7 +23,7 @@ classifiers = [
 ]
 
 [tool.poetry.scripts]
-wetter = "wetter.cli:main"
+wetter = "wetter.app:main"
 
 [tool.poetry.dependencies]
 python = "^3.8.1"

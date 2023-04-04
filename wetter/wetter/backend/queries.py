@@ -6,10 +6,16 @@ as `pandas` and a `date` object used for context. Some functions might define
 additional parameters for context. All of these functions share the same
 output type. This allows the chaining of queries.
 """
+import logging
 from datetime import datetime as dt
 from datetime import timedelta
 
+from wetter import logio
 
+log = logging.getLogger(__name__)
+
+
+@logio(log)
 def latest_datapoint(df, date):
     """Retrieve the latest measurement not exceding a certain date.
 
@@ -23,6 +29,7 @@ def latest_datapoint(df, date):
     :type date: datetime.datetime w/ time zone information
     :return: The latest measurement
     :rtype: pandas.DataFrame
+    :raises: AssertionError
     """
     assert date.tzinfo is not None
     df = df[df.index < date]
@@ -30,6 +37,7 @@ def latest_datapoint(df, date):
     return result
 
 
+@logio(log)
 def last_week(df, date):
     """Retrieve all measurements within a week before a certain date (excluding).
 
@@ -42,6 +50,7 @@ def last_week(df, date):
     :type date: datetime.datetime w/ time zone information
     :return: The latest measurement
     :rtype: pandas.DataFrame
+    :raises: AssertionError
     """
     assert date.tzinfo is not None
     threshold = date - timedelta(days=7)
@@ -49,6 +58,7 @@ def last_week(df, date):
     return result
 
 
+@logio(log)
 def last_month(df, date):
     """Retrieve all measurements of last month.
 
@@ -58,6 +68,7 @@ def last_month(df, date):
     :type date: datetime.datetime w/ time zone information
     :return: The latest measurement
     :rtype: pandas.DataFrame
+    :raises: AssertionError
     """
     assert date.tzinfo is not None
     if date.month != 1:
@@ -65,7 +76,7 @@ def last_month(df, date):
     else:
         year, month = (date.year - 1, 12)
     start = dt(year=year, month=month, day=1, tzinfo=date.tzinfo)
-    days_of_month = 33 - (start + timedelta(days=33)).day
+    days_of_month = _calc_days_of_month(start)
     end = start.replace(month=start.month, day=days_of_month, hour=23, minute=59, second=59)
     result = _windowed_selection(df, start, end)
     return result
@@ -76,6 +87,7 @@ def last_month(df, date):
 # It is very short and nice looking. But(!) it does not consider
 # time zone. The following implementation actually considers
 # timezones and selects data accordingly.
+@logio(log)
 def last_year(df, date):
     """Retrieve all measurements of last year.
 
@@ -85,14 +97,16 @@ def last_year(df, date):
     :type date: datetime.datetime w/ time zone information
     :return: The latest measurement
     :rtype: pandas.DataFrame
+    :raises: AssertionError
     """
     assert date.tzinfo is not None
     start = dt(year=date.year - 1, month=1, day=1, tzinfo=date.tzinfo)
-    end = start.replace(year=start.year + 1) - timedelta(seconds=1)
+    end = start.replace(year=date.year) - timedelta(seconds=1)
     result = _windowed_selection(df, start, end)
     return result
 
 
+@logio(log)
 def specific_month(df, date, month):
     """Retrieve all measurements of a specific month.
 
@@ -107,16 +121,18 @@ def specific_month(df, date, month):
     :type date: datetime.datetime w/ time zone information
     :return: The latest measurement
     :rtype: pandas.DataFrame
+    :raises: AssertionError
     """
     assert date.tzinfo is not None
     year = date.year if date.month > month else date.year - 1
     start = dt(year=year, month=month, day=1, tzinfo=date.tzinfo)
-    days_of_month = 33 - (start + timedelta(days=33)).day
+    days_of_month = _calc_days_of_month(start)
     end = start.replace(month=start.month, day=days_of_month, hour=23, minute=59, second=59)
     result = _windowed_selection(df, start, end)
     return result
 
 
+@logio(log)
 def _windowed_selection(df, start, end):
     """Select a time period in database considering time zones.
 
@@ -131,3 +147,14 @@ def _windowed_selection(df, start, end):
     :type end: datetime.datetime w/ time zone information
     """
     return df[(df.index <= end) & (df.index >= start)]
+
+
+@logio(log)
+def _calc_days_of_month(date):
+    """Calculate the day of the month for a specific date.
+
+    :param date: Context date
+    :type date: datetime.Datetime
+    """
+    date = date.replace(day=1)
+    return 37 - (date + timedelta(days=36)).day

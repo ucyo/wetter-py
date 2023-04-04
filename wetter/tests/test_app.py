@@ -10,19 +10,19 @@ from argparse import ArgumentParser
 
 import pytest
 
-from wetter import cli
+from wetter import app
 
 
 def test_get_parser():
-    p = cli.get_parser()
+    p = app.get_parser()
     assert isinstance(p, ArgumentParser)
 
 
 def test_empty():
-    args = cli.parse_args([])
+    args = app.parse_args([])
     assert args.cmd == "latest"
 
 
 def test_compare():
     with pytest.raises(SystemExit):
-        cli.parse_args(["compare"])
+        app.parse_args(["compare"])
