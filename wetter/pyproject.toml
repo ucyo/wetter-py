@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wetter"
-version = "0.3.0"
+version = "0.4.0"
 description = "CLI tool to parse weather data"
 authors = ["Uğur Çayoğlu <cayoglu@me.com>"]
 readme = "README.md"
