@@ -26,7 +26,7 @@ The tool provides the `wetter` command line tool with several subcommands:
 |`wetter compare --last-week`| Compare current weather w/ last week |
 |`wetter compare --last-month`| Compare current weather w/ last month |
 |`wetter compare --last-year`| Compare current weather w/ last year |
-|`wetter compare-details month`| Analyse specific month (average temperature & hottest days)|
+|`wetter compare --month`| Analyse specific month (average temperature & hottest days)|
 
 Entering nothing but the `wetter` command will return the latest measurement
 of the location similar to `wetter latest`.
