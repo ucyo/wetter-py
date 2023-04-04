@@ -224,10 +224,15 @@ class QueryTicket:
     tz: str = "UTC"
 
     def __post_init__(self):
+        assert self.lon >= -180
+        assert self.lon <= 180
+        assert self.lat >= -90
+        assert self.lat <= 90
         if self.start > self.end:
             tmp = self.start
             self.start = self.end
             self.end = tmp
+
 
 
 class WetterDB:
