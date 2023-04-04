@@ -234,7 +234,6 @@ class QueryTicket:
             self.end = tmp
 
 
-
 class WetterDB:
     """Database of weather measurements for a single location.
 
