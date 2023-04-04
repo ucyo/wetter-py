@@ -2,6 +2,23 @@
 
 ## Setup background process
 
+There are several ways to enable a background process on Unix systems (incl. macOS).
+The easiest and most supported is to setup using `cron`.
+Another scheduling daemon is `systemd`.
+In the following are the instructions for both systems.
+
+> Spoiler alert! Use `cron`.
+
+### Crontab
+
+Execute the following command:
+
+```bash
+(crontab -l ; echo "5 * * * * wetter update") 2> /dev/null | sort -u | crontab -
+```
+
+Check [crontab guru](https://crontab.guru/) for details on the scheduling syntax.
+
 ### Systemd
 
 ### tl;dr
