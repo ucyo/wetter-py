@@ -3,7 +3,24 @@ name = "wetter"
 version = "0.3.1"
 description = "CLI tool to parse weather data"
 authors = ["Uğur Çayoğlu <cayoglu@me.com>"]
+license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/ucyo/wetter-py"
+repository = "https://github.com/ucyo/wetter-py"
+documentation = "https://github.com/ucyo/wetter-py"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
 
 [tool.poetry.scripts]
 wetter = "wetter.cli:main"
