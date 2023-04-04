@@ -40,6 +40,33 @@ BASE_STORE = {
     },
 }
 
+USER = os.environ.get("USER", os.environ.get("USERNAME"))
+
+SYSTEMD_SERVICE = """[Unit]
+Description=Update of wetter cli tool using systemd
+Wants=wetter.timer
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/wetter update
+User={0}
+
+[Install]
+WantedBy=multi-user.target
+""".format(
+    USER
+)
+
+SYSTEMD_TIMER = """[Unit]
+Description=Update of wetter cli tool using systemd
+
+[Timer]
+OnCalendar=*-*-* *:05:05
+
+[Install]
+WantedBy=timers.target
+"""
+
 
 @dataclass
 class Configuration:
@@ -52,6 +79,15 @@ class Configuration:
         self.max_distance = getattr(self.config, "max_distance", self.max_distance)
         self.load_store()
         self.check()
+
+    def _print_systemd_service(self):
+        if USER is None:
+            raise Exception("Please define USER enviroment variable to correctly setup systemd")
+        else:
+            print(SYSTEMD_SERVICE)
+
+    def _print_systemd_timer(self):
+        print(SYSTEMD_TIMER)
 
     def check(self):
         assert "location" in self.config.keys()
@@ -70,6 +106,7 @@ class Configuration:
         qt = QueryTicket(lat=lat, lon=lon, start=start, end=end)
         api = OpenMeteoArchiveMeasurements
         # Request data from API
+        print("Updating database from historical data API")
         resp = api.get(qt)
         if resp.status_code == 200:
             json = resp.json()
@@ -80,7 +117,8 @@ class Configuration:
         self.store.df = df
         self.store.lat = lat
         self.store.lon = lon
-        # self.store.update()
+        print("Updating database from recent API")
+        self.store.update()
         to_store(self.store)
 
     def load_config(self):

@@ -16,7 +16,8 @@ from . import __version__
 def main():
     """Parse user query and and pretty print answer from the database."""
     args = parse_args()
-    db = config.Configuration().get_store()
+    current_config = config.Configuration()
+    db = current_config.get_store()
     now = conn.now()
     latest = qu.latest_datapoint(db.df, now)
 
@@ -39,6 +40,13 @@ def main():
         pretty_print_detailed_comparison(average)
     elif args.cmd == "latest":
         pretty_print_latest(latest)
+    elif args.cmd == "configure":
+        if args.systemd:
+            current_config._print_systemd_service()
+        elif args.systemdtimer:
+            current_config._print_systemd_timer()
+        elif args.config:
+            print("Configuration path:", current_config.config_path)
     else:
         raise Exception(f"Can not understand the provided subcommand {args.cmd}")
 
@@ -61,6 +69,11 @@ def get_parser():
     group.add_argument("--last-month", action="store_true", dest="month", help="Compare w/ last month")
     detailed_cmp_parser = subparsers.add_parser("compare-details", help="Compare today w/ specific month")
     detailed_cmp_parser.add_argument("month", type=int, choices=range(1, 13), help="Month")
+    confparser = subparsers.add_parser("configure", help="Configuration of the tool")
+    gconf = confparser.add_mutually_exclusive_group(required=True)
+    gconf.add_argument("--systemd", action="store_true", help="Show systemd profile")
+    gconf.add_argument("--systemdtimer", action="store_true", help="Show systemd timer profile")
+    gconf.add_argument("--config", action="store_true", help="Show configuration path")
     return parser
 
 
