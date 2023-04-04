@@ -96,7 +96,7 @@ def pretty_print_latest(latest):
     w_now = latest.wind[0]
     msg = f"Currently it is 🌡️ {t_now:.1f}°C and windspeed 🌬️ {w_now:.1f} km/h."
     print(msg)
-    # print_disclaimer_latest(latest)
+    print_disclaimer_latest(latest)
 
 
 def pretty_print_comparison(latest, average, mode):
