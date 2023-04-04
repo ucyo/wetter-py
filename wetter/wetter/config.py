@@ -76,7 +76,7 @@ else:
     )
 
 
-@dataclass(init=False)
+@dataclass
 class Configuration:
     max_distance: int = 1
     config_path: str = DEFAULT_CONFIG_PATH
