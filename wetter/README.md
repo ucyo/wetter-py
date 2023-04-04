@@ -23,6 +23,7 @@ The tool provides the `wetter` command line tool with several subcommands:
 |-------|-----------|
 |`wetter latest`| Return latest measurement for your favourite city|
 |`wetter update`|Update datastore with latest measurements|
+|`wetter update --historical`|Update datastore with measurements from last year|
 |`wetter compare --last-week`| Compare current weather w/ last week |
 |`wetter compare --last-month`| Compare current weather w/ last month |
 |`wetter compare --last-year`| Compare current weather w/ last year |
@@ -65,7 +66,7 @@ Checking if everything is working appropriately can be done using `wetter latest
 
 ```bash
 > wetter latest
-Currently it is 🌡️ 12.7°C and windspeed 🌬️ 13.0 km/h.
+Currently it is 🌡️ 12.7°C and wind speed 🌬️ 13.0 km/h.
 Latest measurement on 📅 2023-01-01 @ 01:00AM.
 ```
 
@@ -75,14 +76,17 @@ Now that we know everything is working as expected. Go ahead and update the data
 
 ## Configuration
 
-I don't know why, but you might be interested in measurements from a different location. You can do this by adjusting the `wetter.toml` file. The location of the `wetter.toml` depends on your operating system. Additionally, you can find the locations of the measurement data itself i.e. `wetter.json`.
+I don't know why, but you might be interested in measurements from a different location. You can do this by adjusting the `wetter.toml` file. The location of the `wetter.toml` depends on your operating system. Additionally, you can find the locations of the measurement data itself i.e. `wetter.json` and logs i.e. `wetter.log`.
 
 |Location|Operating System|
 |--------|----------------|
 |`/home/<username>/.config/wetter/`|Linux :penguin: (config)|
 |`/home/<username>/.local/share/wetter/`|Linux :penguin: (data)|
+|`/home/<username>/.cache/wetter/log/`|Linux :penguin: (data)|
 |`/Users/<username>/Library/Application Support/wetter/`|macOS :apple: (config & data)|
+|`/Users/<username>/Library/Logs/wetter/`|macOS :apple: (logs)|
 |`C:\Users\<username>\AppData\Local\ucyo\wetter`|Windows :window: (config & data)|
+|`C:\Users\<username>\AppData\Local\ucyo\wetter\logs`|Windows :window: (logs)|
 
 If you have problems finding the proper location there is a gimmick that got you covered.
 The path to the configuration file is returned by `wetter configure --config`. I am using
