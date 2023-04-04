@@ -101,6 +101,10 @@ class Configuration:
         assert "location" in self.config.keys()
         assert "lat" in self.config["location"].keys()
         assert "lon" in self.config["location"].keys()
+        assert self.config["location"]["lon"] >= -180
+        assert self.config["location"]["lon"] <= 180
+        assert self.config["location"]["lat"] >= -90
+        assert self.config["location"]["lat"] <= 90
         lat_diff = abs(self.config["location"]["lat"] - self.store.lat)
         lon_diff = abs(self.config["location"]["lon"] - self.store.lon)
         if lat_diff > self.max_distance or lon_diff > self.max_distance:
