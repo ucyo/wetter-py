@@ -13,12 +13,13 @@ from datetime import datetime as dt
 import pandas as pd
 import pytest
 
-from wetter import config
+from wetter.config import Configuration
+from wetter import conn
 
 
 @pytest.fixture
 def db():
-    db = config.Configuration().get_store()
+    db = Configuration().get_store()
     yield db.df
 
 
@@ -48,7 +49,7 @@ def test_update():
 def test_to_old():
     start = dt(year=1201, month=1, day=1)
     end = dt.now()
-    qt = conn.QueryTicket(start=start, end=end)
+    qt = conn.QueryTicket(start=start, end=end, lat=49, lon=8.41)
 
     assert conn.OpenMeteoMeasurements.get(qt).status_code != 200
 
@@ -56,6 +57,6 @@ def test_to_old():
 def test_query_ticket_reversed_dates():
     end = dt.now()
     start = dt.now()
-    qt = conn.QueryTicket(start=start, end=end)
+    qt = conn.QueryTicket(start=start, end=end, lat=49, lon=8.41)
     assert qt.end == start
     assert qt.start == end
