@@ -19,6 +19,7 @@ from json import JSONEncoder
 import pandas as pd
 import platformdirs
 import toml
+import platform as pl
 
 from .conn import OpenMeteoArchiveMeasurements, QueryTicket, WetterDB, utcnow
 
@@ -67,11 +68,18 @@ OnCalendar=*-*-* *:05:05
 WantedBy=timers.target
 """
 
+if pl.system().lower() == "linux":
+    DEFAULT_CONFIG_PATH = os.path.join(platformdirs.user_config_dir(appname=APPNAME), f"{APPNAME}.toml")
+else:
+    DEFAULT_CONFIG_PATH = os.path.join(
+        platformdirs.user_data_dir(appname=APPNAME, appauthor=APPAUTHOR), f"{APPNAME}.toml"
+    )
 
-@dataclass
+
+@dataclass(init=False)
 class Configuration:
     max_distance: int = 1
-    config_path: str = os.path.join(platformdirs.user_config_dir(appname=APPNAME), f"{APPNAME}.toml")
+    config_path: str = DEFAULT_CONFIG_PATH
     store_path: str = os.path.join(platformdirs.user_data_dir(appname=APPNAME, appauthor=APPAUTHOR), f"{APPNAME}.json")
 
     def __post_init__(self):
