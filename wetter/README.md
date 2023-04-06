@@ -82,7 +82,7 @@ I don't know why, but you might be interested in measurements from a different l
 |--------|----------------|
 |`/home/<username>/.config/wetter/`|Linux :penguin: (config)|
 |`/home/<username>/.local/share/wetter/`|Linux :penguin: (data)|
-|`/home/<username>/.cache/wetter/log/`|Linux :penguin: (data)|
+|`/home/<username>/.local/state/wetter/log/wetter.log`|Linux :penguin: (log)|
 |`/Users/<username>/Library/Application Support/wetter/`|macOS :apple: (config & data)|
 |`/Users/<username>/Library/Logs/wetter/`|macOS :apple: (logs)|
 |`C:\Users\<username>\AppData\Local\ucyo\wetter`|Windows :window: (config & data)|
