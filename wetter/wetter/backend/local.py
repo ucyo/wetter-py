@@ -134,5 +134,5 @@ class WetterDB:
             self.lon = lon
         else:
             log.error(f"An error occurred during request [{resp.status_code}]: {resp.json()}", exc_info=True)
-            print("A connection error occured with the API provider occured.")
-            print("Please try again at a later time.")
+            print(f"A connection error occured with the API provider: {resp.status_code} {resp.json()}.")
+            print("Please try again at a later time or change your input.")
