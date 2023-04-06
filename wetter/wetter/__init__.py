@@ -28,8 +28,6 @@ module handles the interface to the user.
 It is responsible for parsing the user input and calling the backend.
 It additionally handles the formating of the results for a nice view by the user.
 """
-from . import backend
-from .tools import logio, setup_logging
 
 
 def get_version():

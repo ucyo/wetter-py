@@ -73,3 +73,25 @@ def now():
     """Return current local time (with timezone information)."""
     utc_offset = -time.altzone if time.daylight else -time.timezone
     return dt.now().replace(tzinfo=pytz.FixedOffset(utc_offset / 60))
+
+
+def get_env_logging(env_key):
+    """Return logging level based on povided environment variable.
+
+    :param env_key: Environment variable to check upon
+    :type env_key: str
+    :return: Logging level [default: WARNING]
+    :rtype: logging.Level
+    """
+    env_val = os.environ.get(env_key, logging.WARNING)
+    levels = {
+        "critical": logging.CRITICAL,
+        "error": logging.ERROR,
+        "warn": logging.WARNING,
+        "warning": logging.WARNING,
+        "info": logging.INFO,
+        "debug": logging.DEBUG,
+    }
+    if isinstance(env_val, str) and env_val in levels.keys():
+        env_val = levels[env_val]
+    return env_val

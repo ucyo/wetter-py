@@ -1,6 +1,6 @@
 <h1 align="center">wetter</h1>
 <p align=center>
-  <img src="https://raw.githubusercontent.com/ucyo/wetter-py/master/assets/undraw_weather.svg" width=300px/>
+  <img src="https://raw.githubusercontent.com/ucyo/wetter-py/master/assets/undraw_weather.svg" width=500px/>
 </p>
 <p align=center>
 <img alt="PyPI" src="https://img.shields.io/pypi/v/wetter?color=blue">
@@ -89,7 +89,8 @@ I don't know why, but you might be interested in measurements from a different l
 |`C:\Users\<username>\AppData\Local\ucyo\wetter\logs`|Windows :window: (logs)|
 
 If you have problems finding the proper location there is a gimmick that got you covered.
-The path to the configuration file is returned by `wetter configure --config`. I am using
+The path to the configuration file is returned by `wetter configure --config`.
+The logging level can be set by the `WETTER_LOG` environmental variable.
 
 ### Sample configuration
 

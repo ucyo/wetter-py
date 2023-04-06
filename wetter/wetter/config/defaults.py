@@ -1,7 +1,10 @@
+"""This module defines opinionated defaults for certain information."""
 import os
 import platform as pl
 
 import platformdirs
+
+WETTER_LOG_VARIABLE = "WETTER_LOG"
 
 APPNAME = "wetter"
 APPAUTHOR = "ucyo"
