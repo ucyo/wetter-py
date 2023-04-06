@@ -6,11 +6,29 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 > Hint: Added, Changed, Fixed, Removed, Updated.
 
-## [Unreleased]
+## [0.4.1] - 2023-04-06
+
+### Added
+
+- Support for logging levels using environmental variable `WETTER_LOG`
+- Documentation to the code base
+- Testdata matching to the new schema
+- Tests for edge cases w/o historical data
+- Tests for the configuration modules.
+- Tests for cli application
+
+### Changed
+
+- Internal structure of the library. Now representing better separation
+
+### Updated
+
+- Formatting of output by cli application
 
 ## [v0.3.1] - 2023-04-04
 
 ### Added
+
 - MIT license
 - CLI subcommand `compare --month X` as `compare-details` alternative
 - CLI subcommand `config` for printing configuration and systemd/cron setup
@@ -20,13 +38,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - API for Historical Data from OpenMeteo Archive
 
 ### Fixed
+
 - Bug in `compared-details` method
 
 ### Removed
+
 - Testdata from the package
 - CLI subcommand `compare-details`
 
 ### Updated
+
 - Documentation for the package
 - Tests for the backend system
 - Tests for the configuration management
@@ -34,14 +55,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [v0.3.0] - 2023-04-03
 
 ### Added
+
 - MVP of the main tasks for comparison and latest measurement as well as update
 
 ### Changed
+
 - Restructuring of the code backend
 
 ## [v0.2.0-rc.1] - 2023-04-03
 
 ### Added
+
 - CI/CD workflow for release creation
 - CI/CD workflow for static analysis
 - CI/CD workflow for build, install and test
