@@ -10,7 +10,7 @@ import logging
 from datetime import datetime as dt
 from datetime import timedelta
 
-from wetter import logio
+from wetter.tools import logio
 
 log = logging.getLogger(__name__)
 

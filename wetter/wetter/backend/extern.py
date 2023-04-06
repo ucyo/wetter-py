@@ -1,9 +1,22 @@
+"""The extern module handles the communication with external services.
+
+The library needs to communicate with Weather APIs for getting the measurement
+data. For future proofing this ability is abstracted. This helps future
+developments and enables the addition of other API providesrs in the future.
+The module has two core structures: (1) Interface descriptiono for API Weather Data
+and (2) an query ticket for unifying the exchange to these servers.
+"""
+
+# from wetter.tools import logio
+import logging
 from dataclasses import dataclass
 from datetime import datetime as dt
 from datetime import timezone as tz
 
 import pandas as pd
 import requests as rqs
+
+log = logging.getLogger(__name__)
 
 
 class APIForWeatherData:
@@ -58,6 +71,8 @@ class APIForWeatherData:
 
 
 class OpenMeteoArchiveMeasurements(APIForWeatherData):
+    """Implementation of the APIForWeatherData Interface for the Open Meteo Archive."""
+
     @staticmethod
     def parse(response):
         """Parse and transform the response in a format accepted by WetterDB.
@@ -97,6 +112,7 @@ class OpenMeteoArchiveMeasurements(APIForWeatherData):
         )
 
     @staticmethod
+    # @logio(log)
     def get(qt):
         """Get the data from REST API and parse the result.
 
@@ -109,6 +125,8 @@ class OpenMeteoArchiveMeasurements(APIForWeatherData):
 
 
 class OpenMeteoMeasurements(APIForWeatherData):
+    """Implementation of the APIForWeatherData Interface for the Open Meteo."""
+
     @staticmethod
     def parse(response):
         """Parse and transform the response in a format accepted by WetterDB.
@@ -148,6 +166,7 @@ class OpenMeteoMeasurements(APIForWeatherData):
         )
 
     @staticmethod
+    # @logio(log)
     def get(qt):
         """Get the data from REST API and parse the result.
 

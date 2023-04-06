@@ -9,13 +9,16 @@ import logging
 from datetime import datetime as dt
 from datetime import timedelta
 
-from wetter import __version__, tools
+from wetter import __version__
 from wetter.backend import queries as qu
 from wetter.backend.extern import OpenMeteoArchiveMeasurements
 from wetter.config import config
-from wetter.tools import logio, setup_logging
+from wetter.config.defaults import WETTER_LOG_VARIABLE
+from wetter.tools import get_env_logging, logio
+from wetter.tools import now as local_now
+from wetter.tools import setup_logging, utcnow
 
-setup_logging()
+setup_logging(get_env_logging(WETTER_LOG_VARIABLE))
 log = logging.getLogger(__name__)
 
 
@@ -25,12 +28,12 @@ def main():
     args = parse_args()
     current_config = config.Configuration()
     db = current_config.get_store()
-    now = tools.now()
+    now = local_now()
     latest = qu.latest_datapoint(db.df, now)
 
     if args.cmd == "update":
         if args.historical:
-            now = tools.utcnow()
+            now = utcnow()
             start = dt(year=now.year - 1, month=1, day=1, tzinfo=now.tzinfo)
             end = now - timedelta(days=30)
             db.update(start=start, end=end, api=OpenMeteoArchiveMeasurements)
@@ -122,6 +125,7 @@ def pretty_print_latest(latest):
 
     :params latest: Latest measurement from database
     :type latest: pd.DataFrame
+    :raises: IndexError
     """
     try:
         t_now = latest.temperature[0]
@@ -184,7 +188,7 @@ def pretty_print_detailed_comparison(window, variable="temperature"):
         print("Unfortunately there are not enough data points.")
         print("Please consider updating the database: `wetter update`")
     else:
-        window.index = window.index.map(lambda x: x.astimezone(tools.now().tzinfo))
+        window.index = window.index.map(lambda x: x.astimezone(local_now().tzinfo))
         overall_average = window.mean()[variable]
         daily_average = {data.index[0]: data.mean()[variable] for (day, data) in window.groupby(window.index.day)}
         hotter_days = {k: v for k, v in daily_average.items() if v > overall_average}
@@ -213,7 +217,7 @@ def print_disclaimer_latest(latest):
         print("Unfortunately there are not enough data points.")
         print("Please consider updating the database: `wetter update`")
     else:
-        latest.index = latest.index.map(lambda x: x.astimezone(tools.now().tzinfo))
+        latest.index = latest.index.map(lambda x: x.astimezone(local_now().tzinfo))
         date = latest.index[0].strftime("%Y-%m-%d")
         time = latest.index[0].strftime("%I:%M%p")
         disclaimer = f"Latest measurement on 📅 {date} @ {time}."
@@ -234,7 +238,7 @@ def print_disclaimer_window(window):
         print("Unfortunately there are not enough data points.")
         print("Please consider updating the database: `wetter update`")
     else:
-        window.index = window.index.map(lambda x: x.astimezone(tools.now().tzinfo))
+        window.index = window.index.map(lambda x: x.astimezone(local_now().tzinfo))
         start = window.index.min().strftime("%Y-%m-%d")
         end = window.index.max().strftime("%Y-%m-%d")
 

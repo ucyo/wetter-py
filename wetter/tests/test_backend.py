@@ -20,12 +20,12 @@ from wetter.backend.extern import (
     OpenMeteoMeasurements,
     QueryTicket,
 )
-from wetter.config import config
+from wetter.config.config import Configuration
 
 
 @pytest.fixture
 def db():
-    db = config.Configuration(store_path="./tests/testdata.json", self_check=False).get_store()
+    db = Configuration(store_path="./tests/testdata.json", self_check=False).get_store()
     yield db
 
 

@@ -1,11 +1,19 @@
+"""This modules defines the necessary structure to save and access the local data.
+
+It defines the `WetterDB` data structure which makes the local data accessible.
+It defines the process to (de)serialize the data store to json, executes
+check on the internal pd.DataFrame object if it is consistent and coherent with
+assumptions made beforehand and defines the workflow for an update.
+"""
 import logging
 from datetime import datetime as dt
 
 import pandas as pd
 
+from wetter.backend.extern import APIForWeatherData, OpenMeteoMeasurements, QueryTicket
 from wetter.tools import utcnow
 
-from .extern import APIForWeatherData, OpenMeteoMeasurements, QueryTicket
+# from wetter import logio
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +48,7 @@ class WetterDB:
         self.df = df
         self.check_df()
 
+    # @logio(log)
     def serialize(self):
         """Serialization of the entire data structure."""
         result = dict(data=self.df.T.to_dict(orient="split"))
@@ -80,6 +89,7 @@ class WetterDB:
         except KeyError:
             return getattr(self.df, name)
 
+    # @logio(log)
     def update(self, start=None, end=None, lat=None, lon=None, api=OpenMeteoMeasurements):
         """Update of a database at a given location.
 

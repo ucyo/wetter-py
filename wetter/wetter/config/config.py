@@ -9,7 +9,6 @@ from dataclasses import dataclass
 import platformdirs
 import toml
 
-from wetter import tools
 from wetter.backend.extern import OpenMeteoArchiveMeasurements
 from wetter.backend.local import WetterDB
 from wetter.config.defaults import (
@@ -23,6 +22,7 @@ from wetter.config.defaults import (
     USER,
 )
 from wetter.config.parser import DecodeDateTime, to_store
+from wetter.tools import logio, utcnow
 
 log = logging.getLogger(__name__)
 
@@ -64,8 +64,9 @@ class Configuration:
         """
         return self.store
 
+    @logio(log)
     def _location_changed(self, lat, lon):
-        start = tools.utcnow()
+        start = utcnow()
         end = start - datetime.timedelta(days=30)
         start = datetime.datetime(year=start.year - 1, month=1, day=1, tzinfo=start.tzinfo)
         print("Updating database from historical data API")
