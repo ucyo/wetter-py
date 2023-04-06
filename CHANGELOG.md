@@ -8,6 +8,29 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [v0.3.1] - 2023-04-04
+
+### Added
+- MIT license
+- CLI subcommand `compare --month X` as `compare-details` alternative
+- CLI subcommand `config` for printing configuration and systemd/cron setup
+- Configuration module
+- Definition of the serialization structure for backend
+- Parser for serialization structure via custom `json.JSONEncoder`
+- API for Historical Data from OpenMeteo Archive
+
+### Fixed
+- Bug in `compared-details` method
+
+### Removed
+- Testdata from the package
+- CLI subcommand `compare-details`
+
+### Updated
+- Documentation for the package
+- Tests for the backend system
+- Tests for the configuration management
+
 ## [v0.3.0] - 2023-04-03
 
 ### Added
