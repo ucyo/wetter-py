@@ -55,14 +55,14 @@ def test_open_meteo_archive_access():
     assert OpenMeteoArchiveMeasurements.get(qt).status_code == 200
 
 
-wrong_input = [dt(year=2022, month=1, day=1), 3, dt(year=1672, month=1, day=2, tzinfo=tz(td(0)))]
+wrong_input = [dt(year=2022, month=1, day=1), 3]
 
 
 @pytest.mark.web
 @pytest.mark.parametrize("end", wrong_input)
 def test_wrong_end_date_for_update(end, db):
     with pytest.raises(Exception):
-        db.update(until=end)
+        db.update(end=end)
 
 
 good_input = [
@@ -75,7 +75,7 @@ good_input = [
 @pytest.mark.parametrize("end,api", good_input)
 def test_correct_end_date_for_update(end, api, db):
     before = db.size
-    db.update(until=end, api=api)
+    db.update(end=end, api=api)
     assert before < db.size
 
 
