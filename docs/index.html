@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>wetter-py</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Merriweather:400);
+      @import url(https://fonts.googleapis.com/css?family=Montserrat:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Roboto:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=PT+Mono:400,700,400italic);
+
+            .left-column {
+        width: 45%;
+        float: left;
+        margin-right: 10px;
+      }
+      .right-column {
+        width: 48%;
+        float: right;
+      }
+
+      body { font-family: 'Montserrat'; }
+      h1, h2, h3 {
+        font-family: 'Roboto';
+        font-weight: normal;
+      }
+      .remark-slide-content h1 {
+        font-size: 40px;
+      }
+      .remark-slide-content h2 {
+        font-size: 30px;
+      }
+      .remark-slide-content {
+        font-size: 23px;
+      }
+      table, td, th {
+        border: 1px solid black;
+      }
+      td {
+        padding: 10px;
+      }
+
+      .red {
+        color: red;
+      }
+      .green {
+        color: green;
+      }
+
+      .remark-code, .remark-inline-code {
+        font-family: 'PT Mono', monospace;
+      }
+
+      .remark-inline-code {
+        background: lightgray;
+        padding-left: 5pt;
+        margin-bottom: 5pt;
+        margin-top: 5pt;
+        padding-right: 5pt;
+        border-radius: 5px;
+        font-size: 21px;
+      }
+      .remark-code {
+        max-height: 400px;
+        border-radius: 15px;
+        font-size: 16px;
+      }
+
+
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+
+class: middle
+
+
+# wetter-py
+## presentation of code base (2023-04-29)
+
+---
+
+# Agenda
+
+- First ideas
+- Project structure
+- Reasoning for choices
+- Difficulties & surprises
+- Further improvements
+
+---
+# First ideas
+
+- REST API: First I thought about doing it as a web service, since we talked about REST APIs, deployment strategies, caching and monitoring of services. But after talking with Hannes I decided against it so that it is a local cli tool now. This lead to other decisions.
+- Rust Application: Started with a rust application, but moved away from it since serialization and deserialization using `serde` got in the way.
+- Python is still the programming language fastest to get a first result.
+
+---
+# Project structure
+```bash
+ucyo@nostromo > tree wetter/
+.
+├── app.py
+├── backend
+│   ├── extern.py
+│   ├── local.py
+│   └── queries.py
+├── config
+│   ├── config.py
+│   ├── defaults.py
+│   └── parser.py
+└── tools.py
+```
+--
+- `app.py` Command-line parsing and pretty printing
+- `backend` ...
+- `config` ...
+- `tools.py` Helper functions for logging, timezones etc.
+
+---
+# Project structure
+## Backend
+```bash
+ucyo@nostromo > tree
+.
+├── backend
+│   ├── extern.py
+│   ├── local.py
+│   └── queries.py
+...
+```
+- `extern.py`
+  - Communication with third party services
+- `local.py`
+  - Communication with local services
+- `queries.py`
+  - Data selection of local measurements
+
+---
+# Project structure
+## Configuration
+```bash
+ucyo@nostromo > tree
+.
+├── config
+│   ├── config.py
+│   ├── defaults.py
+│   └── parser.py
+...
+```
+- `config.py`
+  - Definition of the configuration options
+- `defaults.py`
+  - Sane defaults for configuration
+- `parser.py`
+  - Parsing of configuration files
+
+---
+# Reasoning for choices
++ JSON: Keeping it as simple and maintainable as possible. I considered
+  using a database like Postgres or sqlite, but for a simple database with
+  only a couple hundred kilobytes of data that is unnecessary.
++ PR: Even if I develop for myself, I use Issues and PR for bigger blocks of code.
+  This helps me organize information and resources related to chunks of code.
+  Additionally, this makes it possible to use for documentation. The changes
+  are not isolated and all information is being saved.
++ Queries: All query functions (except one) have the same syntax even some if
+  some of the arguments are not used. This helps interchange query functions
+  if they are updated or changed internally.
++ Test structure: The test folder has the same file structure as the library folder
+  for easy mapping of test functions to library code.
+---
+# Difficulties & surprises
++ Timezones: I expected this to be a problem. One task I was not looking at
+was that the queries need to consider the local time zone of the user.
+This might sound obvious at first but it changes how you handle queries.
+The easy to use queries provided by Pandas are not considering the timezone
+of the queries. Therefore it needs to actually use timestamps for queries.
+
+---
+# Further improvements
+
+0. Write more unit tests (not coverage, but edge cases)
+1. Interactive update on config change
+2. Minimal docker container
+3. Add Code of Conduct
+4. Add bash completion
+5. Add more weather apis
+6. Split CI/CD tasks into more subtasks
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create({
+        ratio: '4:3',
+        highlightStyle: 'dracula',
+        highlightLines: true,
+        navigation: {
+          scroll: false,
+        }
+      });
+    </script>
+  </body>
+</html>
