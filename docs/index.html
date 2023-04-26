@@ -130,12 +130,11 @@ ucyo@nostromo > tree
 │   └── queries.py
 ...
 ```
-- `extern.py`
-  - Communication with third party services
-- `local.py`
-  - Communication with local services
-- `queries.py`
-  - Data selection of local measurements
+- `extern.py`: communication with third party services
+  - Interface to external APIs (`APIForWeatherData`) and implementations for OpenMeteo and OpenMeteoArchive
+  - Python representation for queries (`QueryTicket`)
+- `local.py`: representation of local measurements (`WetterDB`)
+- `queries.py`: data selection of local measurements
 
 ---
 # Project structure
@@ -149,12 +148,12 @@ ucyo@nostromo > tree
 │   └── parser.py
 ...
 ```
-- `config.py`
-  - Definition of the configuration options
-- `defaults.py`
-  - Sane defaults for configuration
-- `parser.py`
-  - Parsing of configuration files
+- `config.py`: configuration of application
+  - config_path, store_path, max_distance
+- `defaults.py`: sane defaults for configuration
+  - Base config & store, systemd, systemd_timer, check config
+- `parser.py`: parse config file and store
+  - Custom JSON en-/decoder
 
 ---
 # Reasoning for choices
