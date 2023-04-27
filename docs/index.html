@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <style>
       @import url(https://fonts.googleapis.com/css?family=Merriweather:400);
+      @import url(https://fonts.googleapis.com/css?family=JetBrains+Mono:400);
       @import url(https://fonts.googleapis.com/css?family=Montserrat:400,700,400italic);
       @import url(https://fonts.googleapis.com/css?family=Roboto:300,400,700,400italic);
       @import url(https://fonts.googleapis.com/css?family=PT+Mono:400,700,400italic);
@@ -53,7 +54,7 @@
       }
 
       .remark-code, .remark-inline-code {
-        font-family: 'PT Mono', monospace;
+        font-family: 'JetBrains Mono', monospace;
       }
 
       .remark-inline-code {
@@ -95,7 +96,7 @@ class: middle
 
 ## 1) Task & Solution
 ## 2) Project structure & Reasoning
-## 3) Difficulties & Further Improvements
+## 3) Difficulties & Possible Improvements
 
 ---
 
@@ -121,7 +122,7 @@ It shall also be possible to *compare the current weather* of this place to hist
 Please ensure your code is *well documented*, *tested* and overall has *high software quality*. The documentation will help us to reproduce your solution while making the review.
 ---
 
-# Solution (overview)
+# Solution
 
 Command-line tool called `wetter-py` available at [GitHub](https://github.com/ucyo/wetter-py).
 
@@ -129,11 +130,15 @@ Command-line tool called `wetter-py` available at [GitHub](https://github.com/uc
 - Historical data is saved as JSON file
 - Configuration is saved as TOML file
 - Logging options can be set with `WETTER_LOG` environment variable
-- Background updates can be set up with `cron` and `systemd`
-
-Getting started:
-- Installation using GitHub releases or pypi
-- No Installation necessary via Dockerhub image
+- Templates for background updates using `cron` and `systemd` are provided
+- Installation using GitHub releases or pypi:
+  ```bash
+  pip install wetter
+  ```
+- No Installation necessary via Dockerhub:
+  ```bash
+  docker run -it ucyo/wetter bash
+  ```
 
 ---
 # Solution
@@ -144,7 +149,7 @@ Tasks:
 - a command to display the *average temperature for a certain month* (if the data is limited, that is fine) and the *days which were hotter than the average*.
 
 Solution:
-- `wetter` or `wetter latest`
+- `wetter latest`
 - `wetter compare --last-{week,month,year}`
 - `wetter compare --month {1,..,12}`
 - `wetter update`
@@ -190,6 +195,8 @@ ucyo@ishimura > tree wetter-py/wetter/
 ├── pyproject.toml
 └── README.md
 ```
+Common python package structure using `pyproject.toml`
+for dependency resolution, `tests/` for unit testing, and `README.md` for package description.
 
 ---
 
@@ -228,6 +235,7 @@ ucyo@ishimura > tree wetter-py/wetter/wetter
 - `tools.py`
   - Helper functions for logging, timezones etc.
   - `dt.now()` and `dt.utcnow()` does not include time zone information
+- `backend/` and `config/` is explained in more details next
 
 ---
 # Project structure
@@ -308,7 +316,7 @@ ucyo@nostromo > tree
   - Separating queries by `QueryTicket` helps checking query parameters in one place.
   - Query specification can be changed later on e.g. more variables, time ranges etc.
   - All query functions have similar syntax input/output.
-+ Test structure:
++ Test folder structure:
   - The test folder has the same file structure as the library.
 ---
 # Difficulty
@@ -322,16 +330,33 @@ ucyo@nostromo > tree
 - `dt.now()` and `dt.utcnow()` does not include time zone information
 
 ---
-# Further improvements
+# Possible Improvements
 
-0. Add more unit tests
+*Immediate changes*
+1. Remove duplicate check file
+2. Add Code of Conduct
+
+*Additional features*
+<!-- 0. Add more unit tests -->
 1. Add interactive update on config change
 2. Add minimal docker container
-3. Add Code of Conduct
-4. Add bash completion
-5. Add more weather apis
-3. Remove duplicate check file
-6. Update CI/CD tasks with more sub-tasks
+3. Add documentation webpage using Sphinx & enable CI/CD
+4. Add `deb` and `rpm` packages
+5. Add bash completion
+6. Add more weather apis
+7. Update CI/CD tasks with more sub-tasks
+
+
+---
+# Possible Improvements <br> (web service)
+
+1. Move config and store to a database
+3. Add user authentication
+2. Build REST API to query the database
+3. Add Ansible deployment configuration
+4. Add automated backup routine
+5. Add checkmk monitoring service
+6. Add cache for inquiries using Redis
 
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
