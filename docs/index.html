@@ -337,7 +337,7 @@ ucyo@ishimura > tree wetter-py/wetter/wetter
 
 - I expected this to be a problem. But not to this extend :)
 - Caught bug considering the local time zone of the user [here](https://github.com/ucyo/wetter-py/blob/master/wetter/wetter/backend/queries.py#L85-L89)
-- Different (sometimes) incompatible libraries e.g. `np.datetime64`, `dt.datetime`.
+- Different (sometimes) incompatible libraries <br> e.g. `np.datetime64`, `dt.datetime`
 - Datetime objects are not supported by default handler
 - `dt.now()` and `dt.utcnow()` does not include time zone information
 
