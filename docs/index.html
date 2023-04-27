@@ -6,10 +6,10 @@
     <style>
       @import url(https://fonts.googleapis.com/css?family=Merriweather:400);
       @import url(https://fonts.googleapis.com/css?family=Montserrat:400,700,400italic);
-      @import url(https://fonts.googleapis.com/css?family=Roboto:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Roboto:300,400,700,400italic);
       @import url(https://fonts.googleapis.com/css?family=PT+Mono:400,700,400italic);
 
-            .left-column {
+      .left-column {
         width: 45%;
         float: left;
         margin-right: 10px;
@@ -19,9 +19,14 @@
         float: right;
       }
 
-      body { font-family: 'Montserrat'; }
-      h1, h2, h3 {
+      body {
         font-family: 'Roboto';
+        font-weight: 300;
+        line-height: 1.2;
+        color: #383838;
+      }
+      h1, h2, h3 {
+        font-family: 'Merriweather';
         font-weight: normal;
       }
       .remark-slide-content h1 {
@@ -60,9 +65,14 @@
         border-radius: 5px;
         font-size: 21px;
       }
+      .remark-code-span-highlighted {
+        color: cyan;
+        font-weight: bold;
+        background: revert;
+      }
       .remark-code {
         max-height: 400px;
-        border-radius: 15px;
+        border-radius: 5px;
         font-size: 16px;
       }
 
@@ -83,110 +93,245 @@ class: middle
 
 # Agenda
 
-- First ideas
-- Project structure
-- Reasoning for choices
-- Difficulties & surprises
-- Further improvements
+## 1) Task & Solution
+## 2) Project structure & Reasoning
+## 3) Difficulties & Further Improvements
 
 ---
+
+<!--
+
 # First ideas
 
 - REST API: First I thought about doing it as a web service, since we talked about REST APIs, deployment strategies, caching and monitoring of services. But after talking with Hannes I decided against it so that it is a local cli tool now. This lead to other decisions.
 - Rust Application: Started with a rust application, but moved away from it since serialization and deserialization using `serde` got in the way.
 - Python is still the programming language fastest to get a first result.
+ -->
+
+
+# Task
+
+Build a *command-line app* that presents the weather for your *favorite city*.
+It shall also be possible to *compare the current weather* of this place to historic data:
+
+- a command to *query the latest data point*
+- a command to compare the current weather with an average of the *last week (last 7 days)*, *month* and *year*.
+- a command to display the *average temperature for a certain month* (if the data is limited, that is fine) and the *days which were hotter than the average*.
+
+Please ensure your code is *well documented*, *tested* and overall has *high software quality*. The documentation will help us to reproduce your solution while making the review.
+---
+
+# Solution (overview)
+
+Command-line tool called `wetter-py` available at [GitHub](https://github.com/ucyo/wetter-py).
+
+- Current & historical weather data from [OpenMeteo](https://open-meteo.com/en/docs)
+- Historical data is saved as JSON file
+- Configuration is saved as TOML file
+- Logging options can be set with `WETTER_LOG` environment variable
+- Background updates can be set up with `cron` and `systemd`
+
+Getting started:
+- Installation using GitHub releases or pypi
+- No Installation necessary via Dockerhub image
+
+---
+# Solution
+
+Tasks:
+- a command to *query the latest data point*
+- a command to compare the current weather with an average of the *last week (last 7 days)*, *month* and *year*.
+- a command to display the *average temperature for a certain month* (if the data is limited, that is fine) and the *days which were hotter than the average*.
+
+Solution:
+- `wetter` or `wetter latest`
+- `wetter compare --last-{week,month,year}`
+- `wetter compare --month {1,..,12}`
+- `wetter update`
+- `wetter update --historical`
+
+---
+
+# Project structure
+
+```bash
+ucyo@ishimura > tree wetter-py/
+.
+├── `.github/`
+├── `assets/`
+├── `cicd-workflows/`
+├── `docs/`
+├── `wetter/`
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── Dockerfile
+├── LICENSE
+├── Makefile
+└── README.md
+```
+- `.github/`
+  - Workflow for building (win, mac, linux) & testing (incl. static)
+  - Workflow for creating (pre-)releases i.e. GitHub, PyPi, Docker
+- `cicd-workflows/`:
+  - Script to build and push (pre-)releases to Dockerhub
+- `wetter/`
+  - Python project code
 
 ---
 # Project structure
+
 ```bash
-ucyo@nostromo > tree wetter/
+ucyo@ishimura > tree wetter-py/wetter/
 .
-├── app.py
-├── backend
+├── `tests/`
+├── `wetter/`
+├── check.sh
+├── poetry.lock
+├── pyproject.toml
+└── README.md
+```
+
+---
+
+<!--
+
+```toml
+[tool.poetry.dependencies]
+python = "^3.8.1"
+pandas = "^1.5.3"
+requests = "^2.28.2"
+platformdirs = "^3.2.0"
+toml = "^0.10.2"
+numexpr = "^2.8.4"
+Bottleneck = "^1.3.7"
+``` -->
+
+
+# Project structure
+
+```bash
+ucyo@ishimura > tree wetter-py/wetter/wetter
+.
+├── `backend/`
 │   ├── extern.py
 │   ├── local.py
 │   └── queries.py
-├── config
+├── `config/`
 │   ├── config.py
 │   ├── defaults.py
 │   └── parser.py
+├── app.py
 └── tools.py
 ```
---
-- `app.py` Command-line parsing and pretty printing
-- `backend` ...
-- `config` ...
-- `tools.py` Helper functions for logging, timezones etc.
+- `app.py`
+  - Command-line parsing and pretty printing
+- `tools.py`
+  - Helper functions for logging, timezones etc.
+  - `dt.now()` and `dt.utcnow()` does not include time zone information
 
 ---
 # Project structure
+
 ## Backend
 ```bash
 ucyo@nostromo > tree
 .
-├── backend
+├── `backend/`
 │   ├── extern.py
 │   ├── local.py
 │   └── queries.py
 ...
 ```
-- `extern.py`: communication with third party services
-  - Interface to external APIs (`APIForWeatherData`) and implementations for OpenMeteo and OpenMeteoArchive
-  - Python representation for queries (`QueryTicket`)
-- `local.py`: representation of local measurements (`WetterDB`)
-- `queries.py`: data selection of local measurements
+- `extern.py`
+  - Communication with third party services
+  - Interface to external APIs (`APIForWeatherData`)
+  - Implementations of interface for OpenMeteo and its archive
+  - Interface to queries (`QueryTicket`)
+- `local.py`
+  - Representation of local measurements (`WetterDB`)
+- `queries.py`
+  - Data selection of local measurements
 
 ---
 # Project structure
+
 ## Configuration
+
 ```bash
 ucyo@nostromo > tree
 .
-├── config
+├── `config/`
 │   ├── config.py
 │   ├── defaults.py
 │   └── parser.py
 ...
 ```
-- `config.py`: configuration of application
-  - config_path, store_path, max_distance
-- `defaults.py`: sane defaults for configuration
-  - Base config & store, systemd, systemd_timer, check config
-- `parser.py`: parse config file and store
-  - Custom JSON en-/decoder
+- `config.py`:
+  - Configuration of application e.g. configuration path and data store location
+- `defaults.py`:
+  - Sane defaults for configuration e.g. config & store data, systemd, systemd_timer, config checks
+- `parser.py`
+  - Parse config file and data store
+  - Datetime objects are not supported by default handler
+  - Custom JSON Encoder (`WetterEncoder`)
+---
+# Reasoning for different choices
+
++ JSON:
+  - Keeping it as simple and maintainable as possible.
+  - Considered using a db (postgres or sqlite),
+    but measurements are structured and only a couple hundred kilobytes.
+
+```json
+{
+    "lat": DEFAULT_LAT,
+    "lon": DEFAULT_LON,
+    "version": 1,
+    "data": {
+        "index": ["temperature", "wind"],
+        "columns": [
+            "2023-01-01T00:00:00.000000+0000",
+            "2023-01-01T01:00:00.000000+0000",
+        ],
+        "data": [[7.7, 12.7], [6.8, 13.0]],
+    },
+}
+```
 
 ---
 # Reasoning for choices
-+ JSON: Keeping it as simple and maintainable as possible. I considered
-  using a database like Postgres or sqlite, but for a simple database with
-  only a couple hundred kilobytes of data that is unnecessary.
-+ PR: Even if I develop for myself, I use Issues and PR for bigger blocks of code.
-  This helps me organize information and resources related to chunks of code.
-  Additionally, this makes it possible to use for documentation. The changes
-  are not isolated and all information is being saved.
-+ Queries: All query functions (except one) have the same syntax even some if
-  some of the arguments are not used. This helps interchange query functions
-  if they are updated or changed internally.
-+ Test structure: The test folder has the same file structure as the library folder
-  for easy mapping of test functions to library code.
++ Pull Requests for solo development:
+  - Opening issues and PR for "big" changes in code.
+  - Helps organize information and resources related to changes.
+  - Helps with documentation and history tracking.
++ Queries:
+  - Separating queries by `QueryTicket` helps checking query parameters in one place.
+  - Query specification can be changed later on e.g. more variables, time ranges etc.
+  - All query functions have similar syntax input/output.
++ Test structure:
+  - The test folder has the same file structure as the library.
 ---
-# Difficulties & surprises
-+ Timezones: I expected this to be a problem. One task I was not looking at
-was that the queries need to consider the local time zone of the user.
-This might sound obvious at first but it changes how you handle queries.
-The easy to use queries provided by Pandas are not considering the timezone
-of the queries. Therefore it needs to actually use timestamps for queries.
+# Difficulty
+
+## Timezones
+
+- I expected this to be a problem. But not to this extend :)
+- Caught bug considering the local time zone of the user [here](https://github.com/ucyo/wetter-py/blob/master/wetter/wetter/backend/queries.py#L85-L89)
+- Different (sometimes) incompatible libraries e.g. `np.datetime64`, `dt.datetime`.
+- Datetime objects are not supported by default handler
+- `dt.now()` and `dt.utcnow()` does not include time zone information
 
 ---
 # Further improvements
 
-0. Write more unit tests (not coverage, but edge cases)
-1. Interactive update on config change
-2. Minimal docker container
+0. Add more unit tests
+1. Add interactive update on config change
+2. Add minimal docker container
 3. Add Code of Conduct
 4. Add bash completion
 5. Add more weather apis
-6. Split CI/CD tasks into more subtasks
+3. Remove duplicate check file
+6. Update CI/CD tasks with more sub-tasks
 
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
@@ -196,6 +341,7 @@ of the queries. Therefore it needs to actually use timestamps for queries.
         ratio: '4:3',
         highlightStyle: 'dracula',
         highlightLines: true,
+        highlightSpans: true,
         navigation: {
           scroll: false,
         }
