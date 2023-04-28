@@ -110,7 +110,7 @@ class: middle
 # Agenda
 
 ## 1) Task & Solution
-## 2) Project structure & Reasoning
+## 2) Project Structure & Reasoning
 ## 3) Difficulties & Possible Improvements
 
 ---
@@ -250,7 +250,7 @@ ucyo@ishimura > tree wetter-py/wetter/wetter
 - `tools.py`
   - Helper functions for logging, timezones etc.
   - `dt.now()` and `dt.utcnow()` does not include time zone information
-- `backend/` and `config/` is explained in more details next
+- `backend/` and `config/` are explained in more detail next
 
 ---
 # Project structure
@@ -300,7 +300,7 @@ ucyo@ishimura > tree wetter-py/wetter/wetter
 + JSON:
   - Keeping it as simple and maintainable as possible.
   - Considered using a db (postgres or sqlite),
-    but measurements are structured and only a couple hundred kilobytes.
+    but measurements are only a couple hundred kilobytes.
 
 ```json
 {
